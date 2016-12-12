@@ -6,23 +6,27 @@
 #' @param javaPath path to your \code{java} executable, or the OS environment variable
 #' @param msmsPath path to the \code{msms} executable, or the OS environment variable
 #' @export
-set_paths <- function(tempDir, pyPath, javaPath, msmsPath, pyMSMSPath, pyCLEANMSPath) {
+set_session <- function(tempDir, javaPath) {
   tempDir <<- tempDir
-  if (!file.exists(tempDir)) stop(paste(tempDir,"does not exist"))
-  
-  pyPath <<- pyPath
-  #if (!file.exists(pyPath)&&pyPath!="python") stop(paste(pyPath,"does not exist"))
+  if (!file.exists(tempDir)) {
+	#stop(paste(tempDir,"does not exist"))
+	dir.create(tempDir)
+	print(paste(tempDir," did not exist and has been created",sep=""))
+  }
   
   javaPath <<- javaPath
   #if (!file.exists(javaPath)&&javaPath!="java") stop(paste(javaPath,"does not exist"))
   
-  msmsPath <<- msmsPath
+  pyPath <<- system.file("data", "multisfs_v4.py", package = "McSwan")
+  #if (!file.exists(pyPath)&&pyPath!="python") stop(paste(pyPath,"does not exist"))
+  
+  msmsPath <<- system.file("data", "msms3.2rc-b163.jar", package = "McSwan")
   if (!file.exists(msmsPath)) stop(paste(msmsPath,"does not exist"))
   
-  pyMSMSPath <<- pyMSMSPath
+  pyMSMSPath <<- system.file("data", "pos_sas.py", package = "McSwan")
   if (!file.exists(pyMSMSPath)) stop(paste(pyMSMSPath,"does not exist"))
   
-  pyCLEANMSPath <<- pyCLEANMSPath
+  pyCLEANMSPath <<- system.file("data", "clean_msOutput.py", package = "McSwan")
   if (!file.exists(pyCLEANMSPath)) stop(paste(pyCLEANMSPath,"does not exist"))
   
   print("all paths have been set")
