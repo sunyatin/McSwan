@@ -11,7 +11,7 @@ set_session <- function(tempDir, javaPath) {
   if (!file.exists(tempDir)) {
 	#stop(paste(tempDir,"does not exist"))
 	dir.create(tempDir)
-	print(paste(tempDir," did not exist and has been created",sep=""))
+	cat(paste("The temporary directory ",tempDir," does not exist and has been created.\n",sep=""))
   }
   
   javaPath <<- javaPath

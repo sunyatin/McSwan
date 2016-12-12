@@ -42,8 +42,6 @@ get_dists <- function(x, n_dist_btsp_per_model, abcTolerance) {
 get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, plot_PLScv,
                     maxPLSncomp = 100, deme, QR_multicollinearity = T) {
   
-  
-  
   #if (!is.null(dim(param)) && ncol(param)>1) stop("PLS is computed against a single parameter andyou provided more than one parameter")
   param <- as.matrix(param)
 
@@ -94,7 +92,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
     if ( maxPLSncomp >= ncol(ss)-1 ) maxPLSncomp <- ncol(ss)-1
     pls <- pls::plsr(param ~ ss, scale = FALSE, validation = "CV", ncomp = maxPLSncomp)
     
-    r <- unlist(pls::RMSEP(pls, intercept=F, estimate="CV", se=F)$val)[1,,]
+    r <- unlist(pls:::RMSEP(pls, intercept=F, estimate="CV", se=F)$val)[1,,]
     
     rm("pls"); invisible(gc(FALSE))
     
