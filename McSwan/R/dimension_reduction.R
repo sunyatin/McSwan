@@ -39,6 +39,7 @@ get_dists <- function(x, n_dist_btsp_per_model, abcTolerance) {
 #' @title Get model-specific PLS components
 #' @param PLS_ncomp if NULL, automatically select the fittest number of PLS components, else an integer to set the number of components to a specific value
 #' @keywords internal
+#' @importFrom pls RMSEP
 get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, plot_PLScv,
                     maxPLSncomp = 100, deme, QR_multicollinearity = T) {
   
@@ -90,11 +91,11 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
     cat("\nAutomatic selection of the fittest number of PLS components\n")
     
     if ( maxPLSncomp >= ncol(ss)-1 ) maxPLSncomp <- ncol(ss)-1
-    pls <- pls::plsr(param ~ ss, scale = FALSE, validation = "CV", ncomp = maxPLSncomp)
+    plsa <- pls::plsr(param ~ ss, scale = FALSE, validation = "CV", ncomp = maxPLSncomp)
     
-    r <- unlist(pls:::RMSEP(pls, intercept=F, estimate="CV", se=F)$val)[1,,]
+    r <- unlist(RMSEP(plsa, intercept=F, estimate="CV", se=F)$val)[1,,]
     
-    rm("pls"); invisible(gc(FALSE))
+    rm("plsa"); invisible(gc(FALSE))
     
     if (which.min(r)<=1) {
       PLS_ncomp <- 1
