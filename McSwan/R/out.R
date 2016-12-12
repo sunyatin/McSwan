@@ -33,7 +33,7 @@ accuracy_f_dist_full <- function(reftb, nSimul, cutoff = 10, minSNP, tolABC = .0
   }
   
   # ggplot
-  g <- ggplot(data=df, aes(x=pos, y=BF, group=recRate, col=recRate)) +  
+  g <- ggplot2::ggplot(data=df, aes(x=pos, y=BF, group=recRate, col=recRate)) +  
     geom_hline(yintercept = .1, size = .7, col = "black") +
     geom_point(size = 3, alpha=.7) + 
     geom_line(size = 1.2, alpha=.7) +
@@ -55,7 +55,7 @@ accuracy_f_dist_full <- function(reftb, nSimul, cutoff = 10, minSNP, tolABC = .0
   require(plyr)
   DF2 <- ddply(df2, .(pos,recRate), function(x) est_accuracy(x[,c("t","e")], mean=mean))
   
-  q <- ggplot(data=DF2, aes(x=pos, y=V1, group=recRate, col=recRate)) +  
+  q <- ggplot2::ggplot(data=DF2, aes(x=pos, y=V1, group=recRate, col=recRate)) +  
     geom_point(size = 3, alpha=.7) + 
     geom_line(size = 1.2, alpha=.7) +
     xlab("Distance (bp)") + ylab("NRMSError") + ggtitle(paste("Focal island:",sweepingIsl))

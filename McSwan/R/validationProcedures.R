@@ -463,7 +463,7 @@ summary_cv <- function(X, file) {
   
   # distance to true sweep
   cv <- subset(D, true.model!="i0" & est.model==true.model)
-  g=ggplot(data=cv, aes(x=abs(est.sweepPos-true.sweepPos), y=..count.., group=true.model, fill=true.model, col=true.model)) + geom_density(alpha=.05) + theme_bw() + xlab("Distance (bp) (log10 scale)") + ylab("Density (counts)") + ggtitle("Density of estimated distances to the beneficial mutation position") + scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x))) + annotation_logticks(sides="b", size=.6)
+  g=ggplot2::ggplot(data=cv, aes(x=abs(est.sweepPos-true.sweepPos), y=..count.., group=true.model, fill=true.model, col=true.model)) + geom_density(alpha=.05) + theme_bw() + xlab("Distance (bp) (log10 scale)") + ylab("Density (counts)") + ggtitle("Density of estimated distances to the beneficial mutation position") + scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x))) + annotation_logticks(sides="b", size=.6)
   print(g)
   
   # inclusion stats
@@ -481,7 +481,7 @@ summary_cv <- function(X, file) {
   tmp <- subset(D, true.model!="i0" & est.model==true.model)
   
   l <- range(c(tmp$true.sweepAge, tmp$est.sweepAge), na.rm=T)
-  g <- ggplot(data=tmp, aes(x = true.sweepAge, 
+  g <- ggplot2::ggplot(data=tmp, aes(x = true.sweepAge, 
                             y = est.sweepAge, 
                             col = log10(true.recRate))) +
     geom_abline(intercept=0, slope=1, col="gray", size=1, alpha=.6) +
@@ -501,7 +501,7 @@ summary_cv <- function(X, file) {
   tmp <- subset(D, true.model!="i0" & est.model==true.model)
   
   l <- range(c(tmp$true.sweepAge, tmp$est.sweepAge), na.rm=T)
-  g <- ggplot(data=tmp, aes(x = true.sweepAge, 
+  g <- ggplot2::ggplot(data=tmp, aes(x = true.sweepAge, 
                             y = est.sweepAge, 
                             col = log10(true.recRate))) +
     geom_segment(aes(x=true.sweepAge, xend=true.sweepAge, y=est.sweepAge.IClow, yend=est.sweepAge.ICup, col=log10(true.recRate)), alpha=.7) +

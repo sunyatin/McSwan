@@ -64,7 +64,7 @@ plow <- function(pos.mcswan, score.mcswan, log10_mcswan=F,
   if (!is.null(ref.show.above)) R <- subset(R, score >= ref.show.above)
   
   print("ggplot!")
-  g=ggplot(data=M) + 
+  g=ggplot2::ggplot(data=M) + 
     geom_segment(aes(x=pos, xend=pos, y=0, yend=score), col="#4D9FC8") +
     geom_segment(data=R, 
                  aes(x=pos, xend=pos, y=0, yend=-score), col="#B84C53") +
@@ -201,7 +201,7 @@ plot_barcodeRing <- function(mcswan.DF,
 
   # PLOOOOOT!
   print("ggplot!")
-  g=ggplot(data=M) + 
+  g=ggplot2::ggplot(data=M) + 
     # pybus
 # 705D90
     geom_line(data=pybus, aes(x=x, y=y), size=.5, col="#EE9A00") +
@@ -351,7 +351,7 @@ plot_1bubbleRing <- function(mcswan.DF,
   
   # PLOOOOOT!
   print("ggplot!")
-  g=ggplot(data=M) + 
+  g=ggplot2::ggplot(data=M) + 
     
     # sweed
     geom_line(data=sweed, aes(x=x, y=y), col="#B84C53")

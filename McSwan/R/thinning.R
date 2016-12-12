@@ -35,7 +35,7 @@ thin <- function(x, reftb, method = "contig", stat = "mean", bwadjust = 1, minWi
     
     par <- reftb$PRIORS[[deme]]
     
-    aa <- suppressWarnings(abc(target = tproj,
+    aa <- suppressWarnings(abc::abc(target = tproj,
                                 param = par,
                                 sumstat = ss,
                                 tol = .005,

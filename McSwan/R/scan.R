@@ -72,7 +72,7 @@ analyze <- function(target,
   if (plot_simCloud) {
     if (ncol(ss)==1) { yy <- ss[,1]*0; yyo <- 0 } else { yy <- ss[,2]; yyo <- tproj[2] }
     dtc <- data.frame(group=reftb$DIMREDUC$LDA$modelIndices, x=ss[,1], y=yy)
-    gz=ggplot(data=dtc) + geom_point(aes(x=x, y=y, col=factor(group)), alpha=.5) +
+    gz=ggplot2::ggplot(data=dtc) + geom_point(aes(x=x, y=y, col=factor(group)), alpha=.5) +
       geom_point(x=tproj[1], y=yyo, cex=6, shape="+", col="purple") +
       xlab("LDA 1") + ylab("LDA 2")
     print(gz)
@@ -85,7 +85,7 @@ analyze <- function(target,
     gfitOK <- rep(FALSE, length(models))
     for ( m in seq_along(models) ) {
       pp <- ss[modelIndices==models[m],, drop=F]
-      tp <- suppressWarnings(abc(tproj, 
+      tp <- suppressWarnings(abc::abc(tproj, 
                                  rep(1,nrow(pp)),
                                  pp, 
                                  tol = tolABC, 
@@ -104,7 +104,7 @@ analyze <- function(target,
   # detect if sweep
   if (!gfitOK) return("failedGFIT")
 
-  pp <- try(suppressWarnings(summary(suppressWarnings(postpr(target = tproj,
+  pp <- try(suppressWarnings(summary(suppressWarnings(abc::postpr(target = tproj,
                                 index = modelIndices,
                                 sumstat = ss,
                                 tol = tolABC[1],
@@ -138,7 +138,7 @@ analyze <- function(target,
     par <- reftb$PRIORS[[sweepIsl]]
     #par$recRate <- NULL
   
-    invisible(capture.output(aa <- try(suppressWarnings(abc(target = tproj,
+    invisible(capture.output(aa <- try(suppressWarnings(abc::abc(target = tproj,
                                param = par,
                                sumstat = ss,
                                tol = tolABC[2],
