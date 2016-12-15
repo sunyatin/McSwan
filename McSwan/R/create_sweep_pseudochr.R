@@ -184,7 +184,7 @@ generate_pseudoobs <- function(reftb,
       # SINGLE WINDOW
       if (is.null(L)) {
         if (doSFS) {
-          cmd <- paste("python ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt", sep="")
+          cmd <- paste(pythonPath," ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt", sep="")
           if (valtb$GENERAL$folded==TRUE) cmd <- paste(cmd,"--fold")
           system(cmd, intern=F)
           SFS <- rbind(SFS, apply(read.table(paste(tempDir,"/sfs.txt",sep=""), header=T, sep="\t"), 2, mean))
@@ -195,7 +195,7 @@ generate_pseudoobs <- function(reftb,
           
           if (grepl("windows", Sys.info()["sysname"], ignore.case = TRUE)) {
             # cleaning
-            cmd <- paste("python ",pyCLEANMSPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/segsitesCLEAN.txt",sep="")
+            cmd <- paste(pythonPath," ",pyCLEANMSPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/segsitesCLEAN.txt",sep="")
             system(cmd, intern=F)
           } else {
             file.rename(paste(tempDir,"/segsites.txt",sep=""), paste(tempDir,"/segsitesCLEAN.txt",sep=""))
@@ -203,7 +203,7 @@ generate_pseudoobs <- function(reftb,
           
           # importing
           write("", file=paste(tempDir,"/MSMS.txt", sep=""))
-          cmd <- paste("python ",pyMSMSPath," -i ",tempDir,"/segsitesCLEAN.txt -o ",tempDir,"/MSMS.txt -L ",sprintf('%i',L), sep="")
+          cmd <- paste(pythonPath," ",pyMSMSPath," -i ",tempDir,"/segsitesCLEAN.txt -o ",tempDir,"/MSMS.txt -L ",sprintf('%i',L), sep="")
           if (valtb$GENERAL$folded==TRUE) cmd <- paste(cmd,"--fold")
           system(cmd, intern=F)
 

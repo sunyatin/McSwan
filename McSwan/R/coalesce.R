@@ -161,7 +161,7 @@ coalesce_migr <- function(x,
                  temp.file = paste(tempDir,"/segsites.txt",sep=""),
                  tbs.matrix = NULL)
   }
-  cmd <- paste("python ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt", sep="")
+  cmd <- paste(pythonPath," ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt", sep="")
   if (execute) system(cmd, intern=F)
   if (execute) file.create(paste(tempDir,"/segsites.txt",sep=""), showWarnings=FALSE)
   if (execute) SFS[["i0"]] <- as.matrix(read.table(paste(tempDir,"/sfs.txt",sep=""), header=T, sep="\t"))
@@ -242,7 +242,7 @@ coalesce_migr <- function(x,
                      tbs.matrix = NULL)
       }
       
-      if (execute) system(paste("python ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt -m ",nOriIsl+1," ",i, sep=""))    
+      if (execute) system(paste(pythonPath," ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt -m ",nOriIsl+1," ",i, sep=""))    
       if (execute) file.create(paste(tempDir,"/segsites.txt",sep=""), showWarnings=FALSE)
       if (execute) SFS[[paste("i",i,sep="")]] <- rbind(SFS[[paste("i",i,sep="")]], 
                                                        apply(read.table(paste(tempDir,"/sfs.txt",sep=""), sep="\t", header=T), 2, mean))
@@ -303,7 +303,7 @@ coalesce <- function(x, method = "partition", nRep = 1,
       system(cmd, intern = F)
     }
   }
-  cmd <- paste("python ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt", sep="")
+  cmd <- paste(pythonPath," ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt", sep="")
   if (G$folded==TRUE) cmd <- paste(cmd,"--fold")
   if (execute) system(cmd, intern=F)
   if (execute) file.create(paste(tempDir,"/segsites.txt",sep=""), showWarnings=FALSE)
@@ -404,7 +404,7 @@ coalesce <- function(x, method = "partition", nRep = 1,
       
     }
     
-    cmdPy <- paste("python ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt -m ",nOriIsl+1," ",i, sep="")
+    cmdPy <- paste(pythonPath," ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt -m ",nOriIsl+1," ",i, sep="")
     if (G$folded==TRUE) cmdPy <- paste(cmdPy,"--fold")
     if (execute) system(cmdPy)
     if (execute) SFS[[paste("i",i,sep="")]] <- as.matrix(read.table(paste(tempDir,"/sfs.txt",sep=""), header=T, sep="\t"))

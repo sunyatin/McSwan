@@ -6,13 +6,26 @@
 #' @param javaPath path to your \code{java} executable, or the OS environment variable
 #' @param msmsPath path to the \code{msms} executable, or the OS environment variable
 #' @export
-set_session <- function(tempDir, javaPath) {
+set_session <- function(tempDir, pythonPath="python", javaPath) {
+
   tempDir <<- tempDir
   if (!file.exists(tempDir)) {
 	#stop(paste(tempDir,"does not exist"))
 	dir.create(tempDir)
-	cat(paste("The temporary directory ",tempDir," does not exist and has been created.\n",sep=""))
+	cat(paste("Temporary directory ",normalizePath(tempDir)," does not exist and has been created.\n",sep=""))
+  } else {
+    cat("Please note that temporary directory ",normalizePath(tempDir)," already exists.\n")
   }
+  cat("Temporary directory has been set as: ",normalizePath(tempDir),"\n")
+  
+  pythonPath <<- pythonPath
+  if ( grepl(".", pythonPath, fixed=T) && !file.exists(pythonPath) ) stop(paste(pythonPath,"does not exist"))
+  #if ( !grepl(".", pythonPath, fixed=T) ) {
+    #WPM <- tryCatch(system("python --help", intern=T), error=function(e) e, warning=function(w) w)
+    WPM <- tryCatch(system(paste(pythonPath,"--help"), intern=T), error=function(e) e, warning=function(w) w)
+    if ("simpleError" %in% attributes(WPM)$class) stop("Python does not seem to be set as an environment variable, please see https://docs.python.org/2/using/windows.html or set the path to a python executable")
+  #}
+  cat("Python has been correctly attached.\n")
   
   javaPath <<- javaPath
   #if (!file.exists(javaPath)&&javaPath!="java") stop(paste(javaPath,"does not exist"))
@@ -29,7 +42,7 @@ set_session <- function(tempDir, javaPath) {
   pyCLEANMSPath <<- system.file("data", "clean_msOutput.py", package = "McSwan")
   if (!file.exists(pyCLEANMSPath)) stop(paste(pyCLEANMSPath,"does not exist"))
   
-  print("all paths have been set")
+  cat("All paths have been set.\n")
 }
 
 

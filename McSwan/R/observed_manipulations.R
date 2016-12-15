@@ -13,7 +13,7 @@ convert_VCF <- function(vcfPath, pops, reftb, outPath, chromosome, minQUAL = NUL
   }
   
   # converter command
-  cmd <- paste("python ",tempDir,"/vcf2pac.py -vcf \"",vcfPath,"\" -o \"",outPath,"\" -chr ",chromosome," -p ",tempDir,"/pops.txt",sep="")
+  cmd <- paste(pythonPath," ",tempDir,"/vcf2pac.py -vcf \"",vcfPath,"\" -o \"",outPath,"\" -chr ",chromosome," -p ",tempDir,"/pops.txt",sep="")
   
   # add folding?
   doFold <- reftb$GENERAL$folded
@@ -31,7 +31,7 @@ get_SFS <- function(inputFile, ms) {
   
   # get template
   write.table(ms, paste(tempDir,"/template.txt",sep=""), row.names=F, col.names=F, quote=F)
-  template_cmd <- paste("python ",pyPath," -i ",tempDir,"/template.txt -o ",tempDir,"/template_sfs.txt",sep="")
+  template_cmd <- paste(pythonPath," ",pyPath," -i ",tempDir,"/template.txt -o ",tempDir,"/template_sfs.txt",sep="")
   system(template_cmd)
   template <- unlist(read.table(paste(tempDir,"/template_sfs.txt",sep=""), sep="\t", header=T))
   

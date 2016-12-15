@@ -4,7 +4,7 @@
 \alias{set_session}
 \title{Set mandatory paths to external softwares}
 \usage{
-set_session(tempDir, javaPath)
+set_session(tempDir, pythonPath = "python", javaPath)
 }
 \arguments{
 \item{tempDir}{path to a temporary directory}
