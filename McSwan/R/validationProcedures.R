@@ -338,6 +338,7 @@ perf_rates <- function(CM) {
 
 #' @title Detect sweeps and estimate sweep age
 #' @param X either the output from simulate_obs || a VCF filepath || a multiSFS
+#' @import ggplot2
 #' @export
 summary_cv <- function(X, file) {
   
