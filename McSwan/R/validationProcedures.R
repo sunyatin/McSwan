@@ -464,7 +464,12 @@ summary_cv <- function(X, file) {
   
   # distance to true sweep
   cv <- subset(D, true.model!="i0" & est.model==true.model)
-  g=ggplot2::ggplot(data=cv, aes(x=abs(est.sweepPos-true.sweepPos), y=..count.., group=true.model, fill=true.model, col=true.model)) + geom_density(alpha=.05) + theme_bw() + xlab("Distance (bp) (log10 scale)") + ylab("Density (counts)") + ggtitle("Density of estimated distances to the beneficial mutation position") + scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x))) + annotation_logticks(sides="b", size=.6)
+  g=ggplot2::ggplot(data=cv, aes(x=abs(est.sweepPos-true.sweepPos), y=..count.., group=true.model, fill=true.model, col=true.model)) + 
+  geom_density(alpha=.05) + theme_bw() + xlab("Distance (bp) (log10 scale)") + ylab("Density (counts)") + 
+  ggtitle("Density of estimated distances to the beneficial mutation position") + 
+  #scale_x_log10(breaks = trans_breaks("log10", function(x) 10^x), labels = trans_format("log10", math_format(10^.x))) + 
+  scale_x_log10() +
+  annotation_logticks(sides="b", size=.6)
   print(g)
   
   # inclusion stats
