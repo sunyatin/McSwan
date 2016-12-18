@@ -412,7 +412,7 @@ summary_cv <- function(X, file) {
   UNIQUE_DEMES <- UNIQUE_DEMES[!duplicated(UNIQUE_DEMES),]
   CM <- confusion_matrix(na.omit(data.frame(UNIQUE_DEMES$true.model, UNIQUE_DEMES$est.model)))
   suppressWarnings(barplot(t(CM), 
-                           col = brewer.pal(nrow(CM), "Paired"), 
+                           col = RColorBrewer::brewer.pal(nrow(CM), "Paired"), 
                            xlab = "Simulated models",
                            main = "Absolute confusion matrices (black line = #sims/model)",
                            ylab = "Absolute counts of estimated models",
@@ -430,7 +430,7 @@ summary_cv <- function(X, file) {
   CM <- confusion_matrix(na.omit(data.frame(UNIQUE_DEMES$true.model, UNIQUE_DEMES$est.model)))
   CM <- t(apply(CM, 1, function(x) x/sum(x)))
   suppressWarnings(barplot(t(CM), 
-                           col = brewer.pal(nrow(CM), "Paired"), 
+                           col = RColorBrewer::brewer.pal(nrow(CM), "Paired"), 
                            xlab = "Simulated models",
                            main = "Relative confusion matrices",
                            ylab = "Fraction of estimated models",
@@ -454,7 +454,7 @@ summary_cv <- function(X, file) {
     cvv[i,names(tmp)] <- tmp/sum(tmp)*100
   }
   suppressWarnings(barplot(cvv, 
-                           col = brewer.pal(nrow(cvv), "Paired"), 
+                           col = RColorBrewer::brewer.pal(nrow(cvv), "Paired"), 
                            xlab = "Number of discrete sweeps detected",
                            main = "Discrete sweeps detected when a single sweep was simulated",
                            ylab = "Per-model percentage of sweeps detected",
