@@ -93,7 +93,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
     if ( maxPLSncomp >= ncol(ss)-1 ) maxPLSncomp <- ncol(ss)-1
     plsa <- pls::plsr(param ~ ss, scale = FALSE, validation = "CV", ncomp = maxPLSncomp)
     
-    r <- unlist(RMSEP(plsa, intercept=F, estimate="CV", se=F)$val)[1,,]
+    r <- unlist(pls::RMSEP(plsa, intercept=F, estimate="CV", se=F)$val)[1,,]
     
     rm("plsa"); invisible(gc(FALSE))
     
