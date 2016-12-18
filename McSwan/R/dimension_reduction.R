@@ -39,7 +39,7 @@ get_dists <- function(x, n_dist_btsp_per_model, abcTolerance) {
 #' @title Get model-specific PLS components
 #' @param PLS_ncomp if NULL, automatically select the fittest number of PLS components, else an integer to set the number of components to a specific value
 #' @keywords internal
-#' @importFrom pls RMSEP
+#' @import pls
 get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, plot_PLScv,
                     maxPLSncomp = 100, deme, QR_multicollinearity = T) {
   
