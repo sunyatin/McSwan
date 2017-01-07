@@ -8,12 +8,13 @@ convert_VCF <- function(vcfPath, pops, reftb, outPath, chromosome, minQUAL = NUL
   # export populations
   if (is.data.frame(pops)) {
     write.table(pops, paste(tempDir,"/pops.txt",sep=""), row.names=F, col.names=F, sep="\t", quote=F)
+    # converter command
+    cmd <- paste(pythonPath," ",pyVCF2PACPath," -vcf \"",vcfPath,"\" -o \"",outPath,"\" -chr ",chromosome," -p ",tempDir,"/pops.txt",sep="")
   } else {
     if (!file.exists(pops)) stop("the pops file you specified has not been found")
+    # converter command
+    cmd <- paste(pythonPath," ",pyVCF2PACPath," -vcf \"",vcfPath,"\" -o \"",outPath,"\" -chr ",chromosome," -p ",pops,sep="")
   }
-  
-  # converter command
-  cmd <- paste(pythonPath," ",tempDir,"/vcf2pac.py -vcf \"",vcfPath,"\" -o \"",outPath,"\" -chr ",chromosome," -p ",tempDir,"/pops.txt",sep="")
   
   # add folding?
   doFold <- reftb$GENERAL$folded

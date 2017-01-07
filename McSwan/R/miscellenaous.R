@@ -42,6 +42,9 @@ set_session <- function(tempDir, pythonPath="python", javaPath) {
   pyCLEANMSPath <<- system.file("data", "clean_msOutput.py", package = "McSwan")
   if (!file.exists(pyCLEANMSPath)) stop(paste(pyCLEANMSPath,"does not exist"))
   
+  pyVCF2PACPath <<- system.file("data", "vcf2pac.py", package = "McSwan")
+  if (!file.exists(pyVCF2PACPath)) stop(paste(pyVCF2PACPath,"does not exist"))
+  
   cat("All paths have been set.\n")
 }
 
