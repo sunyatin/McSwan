@@ -269,7 +269,7 @@ coalesce <- function(x, method = "partition", nRep = 1,
                           phyclust = TRUE,
                           verbose = FALSE) {
   # method: partition || nMigrants
-
+NNY <- 2
   G <- x$GENERAL
   P <- x$PRIORS
   SFS <- list()
