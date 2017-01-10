@@ -9,7 +9,7 @@
 #' #@export
 #' @keywords internal
 get_size <- function(ms, islandIndex, eventAge) {
-print("size")
+
   msarr <- unlist(strsplit(ms, " "))
 
   df <- c()
@@ -269,7 +269,7 @@ coalesce <- function(x, method = "partition", nRep = 1,
                           phyclust = TRUE,
                           verbose = FALSE) {
   # method: partition || nMigrants
-NNY <- 2
+
   G <- x$GENERAL
   P <- x$PRIORS
   SFS <- list()
