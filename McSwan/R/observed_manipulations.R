@@ -4,16 +4,23 @@
 #' @param pops a dataframe containing two columns: \emph{sample.ID} & \emph{population.ID}. Note that \emph{population.ID} needs to be an integer and that \emph{population.ID} must correspond to the index of the island specified in your \emph{ms} command
 #' @export
 convert_VCF <- function(vcfPath, pops, reftb, outPath, chromosome, minQUAL = NULL) {
+
+  ms <- reftb$GENERAL$msDemography
+  nIslands <- ifelse(!grepl("-I", ms), 1, NA)
+  if (is.na(nIslands)) {
+    ms <- unlist(strsplit(ms, " "))
+    nIslands <- ms[which(ms=="-I")+1]
+  }
   
   # export populations
   if (is.data.frame(pops)) {
     write.table(pops, paste(tempDir,"/pops.txt",sep=""), row.names=F, col.names=F, sep="\t", quote=F)
     # converter command
-    cmd <- paste(pythonPath," ",pyVCF2PACPath," -vcf \"",vcfPath,"\" -o \"",outPath,"\" -chr ",chromosome," -p ",tempDir,"/pops.txt",sep="")
+    cmd <- paste(pythonPath," ",pyVCF2PACPath," -vcf \"",vcfPath,"\" -o \"",outPath,"\" -chr ",chromosome," -I ",nIslands," -p ",tempDir,"/pops.txt",sep="")
   } else {
     if (!file.exists(pops)) stop("the pops file you specified has not been found")
     # converter command
-    cmd <- paste(pythonPath," ",pyVCF2PACPath," -vcf \"",vcfPath,"\" -o \"",outPath,"\" -chr ",chromosome," -p ",pops,sep="")
+    cmd <- paste(pythonPath," ",pyVCF2PACPath," -vcf \"",vcfPath,"\" -o \"",outPath,"\" -chr ",chromosome," -I ",nIslands," -p ",pops,sep="")
   }
   
   # add folding?

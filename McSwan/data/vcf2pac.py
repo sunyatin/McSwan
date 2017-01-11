@@ -11,6 +11,8 @@ import sys
 # PAC = Population (Derived) Allele Count
 # now handles SPECTRUM FOLDING
 
+# 11 01 2017: added a -I option to synchronize PAC with simulated (now handles unsampled populations)
+
 ### ATTENTION! le sorted iterkeys fait de facon alphabetique !! pas bon !!
 
 # remove monomorphic SNPs
@@ -28,6 +30,8 @@ parser.add_argument("-o", '--fpac', type=str, required=True, action='store',
          help='path to output PAC file')
 parser.add_argument("-p", '--pop_sample_file', type=str, required=True, action='store',
          help='path to file specifying assignment of samples to populations\n Format of the file: samples on each line with tab-separated fields (the two first ones are mandatory, the third optional), note that POPULATION_ID should be an integer identifying the population and respecting the order of islands specified in the MS command:\n SAMPLE_NAME POPULATION_ID COMMENTS')
+parser.add_argument("-I", '--islands', type=int, required=True, action='store',
+         help='the number of islands (or total populations) in your model, including unsampled populations')
 parser.add_argument("-chr", '--chrom', type=str, required=True, action='store',
          help='chromosome to analyse (must match the name in VCF)')
 parser.add_argument("-fold", action='store_true',
@@ -43,11 +47,13 @@ pop_sample_file = args.pop_sample_file
 chrom = args.chrom
 minQual = args.minQual
 doFold = args.fold
+nIsl = args.islands
 
 # prompt to user
 print "> Input file: "+fvcf
 print "> Minimum QUAL: "+str(minQual)
 print "> Chromosome: "+chrom
+print "> Number of islands: "+islands
 if doFold==False:
 	print "> SFS type: Unfolded"
 else:
@@ -93,7 +99,8 @@ if os.path.isfile(pop_sample_file) is False: sys.exit("Population file does not 
 
 # get population structure
 # store into a dictionary:  pops = { popID => [sampleIDs] }
-pops = {}
+#pops = {}
+pops = dict.fromkeys(range(1, 1+nIsl), [])
 with open(pop_sample_file, 'r') as fp:
 	for line in fp:
 		line = line.rstrip()
@@ -111,7 +118,7 @@ for key in popIDs:
 	key = str(key)
 	pop_sample_names.append( list(pops[key]) )
 	pop_n_gametes.append( 2 * len(pops[key]) )
-	print "|___ Population "+str(key)+" with "+str(len(pops[key]))+" samples:"
+	print "|___ Population #"+str(key)+" with "+str(len(pops[key]))+" samples:"
 	print list(pops[key])
 	print "\n"
 threshold = 1. * sum(pop_n_gametes) / 2
@@ -146,13 +153,14 @@ with open(fvcf, 'r') as f:
 				linarr = line.split('\t')
 				# if strictly biallelic and with sufficient quality support
 				if len(linarr[3]) == 1 and len(linarr[4]) == 1 and float(linarr[5]) >= minQual:
-					pac = []
-					for p in pop_sample_idx:
-						ac = [get_ind_AC(x) for x in [linarr[x] for x in p]]
+					pac = [0]*nIsl
+					for p in range(len(pop_sample_idx)):
+						ac = [get_ind_AC(x) for x in [linarr[x] for x in pop_sample_idx[p]]]
 						if -1 in ac:
 							continue
 						sum_ac = sum(ac)
-						pac.append(sum_ac)
+						#pac.append(sum_ac)
+						pac[popIDs[p]] = sum_ac
 					if doFold:
 						pac = fold(pac, pop_n_gametes, threshold)
 						total_ac = sum(pac[0])
