@@ -17,6 +17,8 @@ import sys
 
 # remove monomorphic SNPs
 
+# ASSUMES _____DIPLOID_____ SAMPLES!
+
 ####################################################################
 ####################################################################
 ####################################################################
@@ -31,7 +33,7 @@ parser.add_argument("-o", '--fpac', type=str, required=True, action='store',
 parser.add_argument("-p", '--pop_sample_file', type=str, required=True, action='store',
          help='path to file specifying assignment of samples to populations\n Format of the file: samples on each line with tab-separated fields (the two first ones are mandatory, the third optional), note that POPULATION_ID should be an integer identifying the population and respecting the order of islands specified in the MS command:\n SAMPLE_NAME POPULATION_ID COMMENTS')
 parser.add_argument("-I", '--islands', type=int, required=True, action='store',
-         help='the number of islands (or total populations) in your model, including unsampled populations')
+         help='the TOTAL number of islands (or populations) in your model, including unsampled populations')
 parser.add_argument("-chr", '--chrom', type=str, required=True, action='store',
          help='chromosome to analyse (must match the name in VCF)')
 parser.add_argument("-fold", action='store_true',
@@ -50,10 +52,10 @@ doFold = args.fold
 nIsl = args.islands
 
 # prompt to user
-print "> Input file: "+fvcf
+print "> Input file: "+str(fvcf)
 print "> Minimum QUAL: "+str(minQual)
-print "> Chromosome: "+chrom
-print "> Number of islands: "+islands
+print "> Chromosome: "+str(chrom)
+print "> Number of islands: "+str(nIsl)
 if doFold==False:
 	print "> SFS type: Unfolded"
 else:
@@ -100,14 +102,15 @@ if os.path.isfile(pop_sample_file) is False: sys.exit("Population file does not 
 # get population structure
 # store into a dictionary:  pops = { popID => [sampleIDs] }
 #pops = {}
-pops = dict.fromkeys(range(1, 1+nIsl), [])
+keys = [str(x) for x in range(1, 1+nIsl)]
+pops = {key: set() for key in keys}
 with open(pop_sample_file, 'r') as fp:
 	for line in fp:
 		line = line.rstrip()
 		linarr = line.split('\t')
 		if linarr[1].isdigit() == False: sys.exit("POPULATION_ID at line "+str(line)+" is not an integer")
-		if linarr[1] not in pops.keys(): pops[linarr[1]] = set()
-		pops[linarr[1]].add(linarr[0])
+		#if linarr[1] not in pops.keys(): pops[linarr[1]] = set()
+		pops[str(linarr[1])].add(linarr[0])
 # convert to list of lists
 # pop_sample_names = [ [sam01, sam02, ...], [sam11, sam12, ..] ]
 pop_sample_names = []
@@ -160,7 +163,7 @@ with open(fvcf, 'r') as f:
 							continue
 						sum_ac = sum(ac)
 						#pac.append(sum_ac)
-						pac[popIDs[p]] = sum_ac
+						pac[popIDs[p]-1] = sum_ac
 					if doFold:
 						pac = fold(pac, pop_n_gametes, threshold)
 						total_ac = sum(pac[0])
