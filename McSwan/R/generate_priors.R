@@ -19,7 +19,7 @@ get_max_sweep_ages <- function(ms, No) {
   if ( n > 1 ) {
     eji <- which(msarr=="-ej")
     ej <- matrix(sapply(eji, function(x) {
-      return(as.numeric(c(msarr[eji+1], msarr[eji+2], msarr[eji+3])))
+      return(as.numeric(c(msarr[x+1], msarr[x+2], msarr[x+3])))
     }), ncol=3, byrow=T)
     auto_max_sweep_age <- rep(NA, n)
     names(auto_max_sweep_age) <- 1:n
