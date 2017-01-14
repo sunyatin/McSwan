@@ -263,12 +263,12 @@ coalesce_migr <- function(x,
 #' @param nRep (optional) number of repetitions to approximate the sweep (default 100)
 #' @return A reference table with all simulated site frequency spectra.
 #' @export
-coalesce <- function(x, method = "partition", nRep = 1,
+coalesce <- function(x, method = "NULL", nRep = 1,
                           SAA = 1,
                           execute = TRUE,
                           phyclust = TRUE,
                           verbose = FALSE) {
-  # method: partition || nMigrants
+  # method: partition || nMigrants || NULL (NULL is recommended, RT 14012017)
 
   G <- x$GENERAL
   P <- x$PRIORS
@@ -339,12 +339,16 @@ coalesce <- function(x, method = "partition", nRep = 1,
         msarrTmp[I+1+i] <- nSweeping
         msarrTmp[I+1+nIsl] <- paste(msarrTmp[I+1+nIsl], nNonSweeping, 0)
         msarrTmp[I+1] <- 1L + as.integer(msarrTmp[I+1])
-      } else {
+      } else if (method=="nMigrants") {
         msarrTmp[I+1+i] <- islSize
         msarrTmp[I+1+nIsl] <- paste(msarrTmp[I+1+nIsl], 0, 0)
         msarrTmp[I+1] <- 1L + as.integer(msarrTmp[I+1])
+      } else {
+# 14012016
+# NADA
       }
 
+if (method=="partition" || method=="nMigrants") {
       # sweep age (absolute count of generations)
       Ts <- P[[i]]$sweepAge[j]
 
@@ -368,6 +372,18 @@ coalesce <- function(x, method = "partition", nRep = 1,
                        "-en", (Ts+islSize-1)/(4*G$No), i, islK,
                        "-ej", (Ts+islSize)/(4*G$No), nOriIsl+1, i)
       cmdList <- gsub("\\s+", " ", cmdList)
+} else {
+      # sweep age (absolute count of generations)
+      Ts <- P[[i]]$sweepAge[j]
+
+      cmdList <- paste(paste(msarrTmp[-c(1:2)],collapse=" "),
+                       # bottleneck to mimick multicoalescence
+                       "-en", Ts/(4*G$No), i, Ib,
+                       # merge sub-islands after multicoalescence
+                       ###### TO IMPROVE TO AVOID CONFLICT OF ej AGES
+                       "-en", (Ts+islSize-1)/(4*G$No), i, islK)
+      cmdList <- gsub("\\s+", " ", cmdList)
+}
 
       if (execute) {
         if (phyclust) {

@@ -158,7 +158,7 @@ parser.add_argument('-i', '--inputFile', type=str, required=True,
 parser.add_argument('-o', '--outputFile', type=str, required=True,
                     action="store", help="output file path")
 parser.add_argument('-m', '--merge', type=int, nargs="+", default=-1, required=False,
-                    action="store", help="if multisfs needs to be done on merged island, specify island merging")
+                    action="store", help="if multisfs needs to be done on merged island, specify island merging as a space-separated list of pairs, eg IslFrom1 IslDest1 IslFrom2 IslDest2 .. IslFromN IslDestN")
 parser.add_argument('--fold', required=False,
                     action="store_true", help="add this option to fold the multisfs")
 parser.add_argument('-v', '--verbose', required=False,
