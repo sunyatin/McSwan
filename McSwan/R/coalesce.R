@@ -376,6 +376,9 @@ if (method=="partition" || method=="nMigrants") {
       # sweep age (absolute count of generations)
       Ts <- P[[i]]$sweepAge[j]
 
+      # near k
+      islK <- get_size(G$ms, i, Ts/(4*G$No))
+
       cmdList <- paste(paste(msarrTmp[-c(1:2)],collapse=" "),
                        # bottleneck to mimick multicoalescence
                        "-en", Ts/(4*G$No), i, Ib,
