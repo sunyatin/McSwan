@@ -423,7 +423,11 @@ if (method=="partition" || method=="nMigrants") {
 
     }
 
+if (method=="partition" || method=="nMigrants") {
     cmdPy <- paste(pythonPath," ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt -m ",nOriIsl+1," ",i, sep="")
+} else {
+    cmdPy <- paste0(pythonPath," ",pyPath," -i ",tempDir,"/segsites.txt -o ",tempDir,"/sfs.txt")
+}
     if (G$folded==TRUE) cmdPy <- paste(cmdPy,"--fold")
     if (execute) system(cmdPy)
     if (execute) SFS[[paste("i",i,sep="")]] <- as.matrix(read.table(paste(tempDir,"/sfs.txt",sep=""), header=T, sep="\t"))
