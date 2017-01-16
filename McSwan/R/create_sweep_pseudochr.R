@@ -144,8 +144,8 @@ if (FALSE) {
 
 # { corr 15012017
 allIsl <- length(islandSizes)
-s2 <- gsub(" -ej ", "", ms); nEJ <- (nchar(ms)-nchar(s2))/nchar(" -ej ")
-allIsl <- allIsl + nEJ
+s2 <- gsub(" -es ", "", ms); nES <- (nchar(ms)-nchar(s2))/nchar(" -es ")
+allIsl <- allIsl + nES
 beneFreq <- sapply(1:allIsl, function(j) {
   1 / (2*No * get_size(ms, j, P[[isl]]$sweepAge[s]/(4*No)))
 })
