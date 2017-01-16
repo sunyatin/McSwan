@@ -153,7 +153,7 @@ generate_pseudoobs <- function(reftb,
           add <- paste("-Sc", 0, o, 0, 0, 0, sep=" ")
           ScUnsweeped <- c(ScUnsweeped, add)
         }
-        Sc <- paste(Sc, ScUnsweeped, collapse=" ")
+        Sc <- paste(Sc, paste(ScUnsweeped, collapse=" "), collapse=" ")
         
         # command
         msms <- paste("-N",No,"-ms",msTmp,Sc,"-SI",SI,"-Sp",P[[isl]]$sweepPos[s])
