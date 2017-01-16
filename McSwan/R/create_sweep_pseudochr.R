@@ -128,6 +128,8 @@ generate_pseudoobs <- function(reftb,
       if (isl=="i0") {
         msms <- paste("-N",No,"-ms",ms)
       } else {
+
+if (FALSE) {
         # initial frequency of beneficial allele in each deme
         #beneFreq <- paste(rep(1/No, nIsl), collapse=" ")
         #beneFreq <- paste(c(1/2053, 1/29153), collapse=" ")
@@ -138,7 +140,19 @@ generate_pseudoobs <- function(reftb,
         
         # sweep start
         SI <- paste(P[[isl]]$sweepAge[s]/(4*No), nIsl, beneFreq, collapse=" ")
-        
+} # corrected below, 15012017
+
+# { corr 15012017
+allIsl <- length(islandSizes)
+s2 <- gsub(" -ej ", "", ms); nEJ <- (nchar(ms)-nchar(s2))/nchar(" -ej ")
+allIsl <- allIsl + nEJ
+beneFreq <- sapply(1:allIsl, function(j) {
+  1 / (2*No * get_size(ms, j, P[[isl]]$sweepAge[s]/(4*No)))
+})
+beneFreq <- paste(beneFreq, collapse=" ")
+SI <- paste(P[[isl]]$sweepAge[s]/(4*No), allIsl, beneFreq, collapse=" ")
+# }
+
         # recombination
         rho <- paste(4 * No * P[[isl]]$recRate[s] * (windowSize-1), sprintf('%i', windowSize), sep=" ")
         msTmp <- paste(ms, "-r", rho, sep=" ")
