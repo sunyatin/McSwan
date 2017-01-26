@@ -194,7 +194,7 @@ dim_reduction <- function(x,
                           removeCollinearCols = TRUE,
 						#LDA
                           LDA_minVariance = 0,
-						  LDA_tol = 1e-4,
+						  LDA_tol = 1e-9,
 						#PLS
                           PLS_normalize = TRUE,
                           PLS_ncomp = NULL,
@@ -209,7 +209,6 @@ dim_reduction <- function(x,
   # internally set options
   QR_multicollinearity = TRUE # whether multicollinearity should be detected by QR decomposition or not (TRUE is recommended)
   doPLSrecRate = FALSE # whether to regress (in addition to the sweep ages) onto the recombination parameter in the PLS analyses (since the recombination rate is considered a nuisance parameter, it can be sometimes useful to discard it from the PLS analysis)
-  tolLDA = 1e-4 # MASS::lda tolerance
   
   
   x$DIMREDUC <- list()
@@ -291,7 +290,7 @@ dim_reduction <- function(x,
   
   # LDA
   cat('LDA computation.\n')
-  lda <- MASS::lda(x=lsfs[,euCols], grouping=modelIndices, tol=tolLDA)
+  lda <- MASS::lda(x = lsfs[,euCols], grouping = modelIndices, tol = LDA_tol)
   ldaScores <- predict(lda, lsfs[,euCols])$x
   if (F) {
   cat('PCA computation.\n')
