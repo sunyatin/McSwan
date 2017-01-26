@@ -2,8 +2,15 @@
 % Please edit documentation in R/validationProcedures.R
 \name{perf_rates}
 \alias{perf_rates}
-\title{Computes performance rate statistics: True Positive Rate (TPR=sensitivity), True Negative Rate (TNR=specificity) and False Discovery Rate (FDR=1-precision)}
+\title{Computes performance statistics: True Positive Rate (TPR=sensitivity), True Negative Rate (TNR=specificity) and False Discovery Rate (FDR=1-precision)}
 \usage{
 perf_rates(CM)
 }
+\arguments{
+\item{CM}{a confusion matrix}
+}
+\value{
+A dataframe of performance statistics.
+}
+\keyword{internal}
 

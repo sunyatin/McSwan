@@ -2,7 +2,7 @@
 % Please edit documentation in R/dimension_reduction.R
 \name{project_target}
 \alias{project_target}
-\title{Project an observed multiSFS onto LDA/PLS components stored in a referenceTable object}
+\title{Project an observed multiSFS onto LDA/PLS axes, stored in a referenceTable object}
 \usage{
 project_target(reftb, target, method, focalIsland = NULL)
 }

@@ -2,11 +2,39 @@
 % Please edit documentation in R/observed_manipulations.R
 \name{convert_VCF}
 \alias{convert_VCF}
-\title{convert a VCF to a proper format}
+\title{Filter and convert a VCF into a file of per-population per-SNP allele counts}
 \usage{
 convert_VCF(vcfPath, pops, reftb, outPath, chromosome, minQUAL = NULL)
 }
 \arguments{
-\item{pops}{a dataframe containing two columns: \emph{sample.ID} & \emph{population.ID}. Note that \emph{population.ID} needs to be an integer and that \emph{population.ID} must correspond to the index of the island specified in your \emph{ms} command}
+\item{vcfPath}{path/name of the VCF file}
+
+\item{pops}{a dataframe of sample names and population assignment \emph{or}, alternatively, an external file with the same format (see \emph{Details})}
+
+\item{reftb}{an initialized \code{referenceTable} object}
+
+\item{outPath}{path/name of the file in which the function will write the per-population per-SNP allele counts}
+
+\item{chromosome}{name of the chromosome to analyze (should match a chromosome name in the VCF file)}
+
+\item{minQUAL}{any SNP with \code{QUAL < minQUAL} will be filtered out (set \code{minQUAL = NULL} to disable the filtering)}
+}
+\value{
+No internal return. The function will write an external file. This file has a header summarizing the conversion parameters (starting with "#"), followed by as many lines as biallelic SNPs. For each line, there are three space-delimited fields:\itemize{
+\item the SNP position on the chromosome; \item a SNP coefficient: always 1 if derived allele counts; can be 1 or 0.5 if minor allele counts -- 0.5 corresponding to a SNP which can have two possible alternative states; \item the per-population allele counts, formatted \code{ac.i1.i2.[...].in} with (i1, i2, ..., in) the allele counts in populations (1, 2, ..., n). }
+}
+\description{
+This function calls a Python script which reads in a VCF file, extracts chromosome-specific variants, filters the variants to retain only high-quality biallelic SNPs, calculates the population-specific allele counts for each retained SNP (minor or derived allele counts, depending on your referenceTable specifications) and writes the results into a new external file.
+}
+\details{
+Non biallic SNPs in the VCF file will be automatically filtered out. If there are more samples in the VCF file than samples specified in \emph{pops}, those supernumary samples will be ignored. Note that the function works also for unsampled populations.
+
+The \code{pops} dataframe must have two columns: (i) names of the samples, matching the names in the VCF file; (ii) indices of the populations to which the samples belong, these indices must correspond to the indices of the populations specified in the \emph{MS}-formatted demographic history. For instance, if the sample "B101" in the VCF belongs to the third-indexed population of your demographic history, the first line will read: "B101" 3. Note that MS starts population indexing at 1 (included).
+}
+\examples{
+Please refer to the vignette.
+}
+\seealso{
+\code{\link{get_SFS}}
 }
 

@@ -1,19 +1,39 @@
-#thinning.R
 
-#' @title new thinning
+#' @title Merge contiguous sweeps
+#' @description This function merges contiguous regions detected by \code{\link{gscan}} as having experienced a selective sweep.
+#' @param x a dataframe returned by \code{\link{gscan}}
+#' @param reftb an initialized \code{referenceTable} object
+#' @param bwadjust (numeric) bandwidth coefficient, the algorithm will extend contiguity as far as \code{bwadjust * windowSize} from any focal window
+#' @param minWindows (integer) the minimum number of contiguous windows required to perform contiguity search
+#' @param summary_stat (string) the central statistic to average the parameter estimates of merged contiguous windows ("mean" recommended)
+#' @param plot_thinning (logical) plot a representation of the genomic fragment with the contiguous sweep regions
+#' @return Returns a dataframe of the merged contiguous sweeps. One sweep per line, and in columns:
+#' \itemize{ 
+#' \item \code{\bold{sweep.center}} center of the contiguous sweep region
+#' \item \code{\bold{sweep.lbound}} first position of the contiguous sweep region
+#' \item \code{\bold{sweep.rbound}} last position of the contiguous sweep region
+#' \item \code{\bold{BF}} aggregated Bayes Factor of the contiguous sweep region
+#' \item \code{\bold{deme}} population detected to have experienced a selective sweep (given as "i" & index of the population in the \emph{MS} command)
+#' \item \code{\bold{sweepAge}} posterior estimate for the sweep age
+#' \item \code{\bold{sweepAge.IC.low}} lower boundary of the 95% credible interval for the sweep age estimation
+#' \item \code{\bold{sweepAge.IC.up}} upper boundary of the 95% credible interval for the sweep age estimation
+#' }
+#' @seealso \code{\link{gscan}}
 #' @export
-thin <- function(x, reftb, method = "contig", stat = "mean", bwadjust = 1, minWindows = 1, plot_thinning = F, epsilon = 1e-15, summary_stat = "mean", obs) {
-  print("thinnin'")
+#' @examples Please refer to the vignette.
+thin <- function(x, reftb, bwadjust = 1, minWindows = 1, summary_stat = "mean", plot_thinning = FALSE) {
   
-  Y <- thin_SIMPLEGOOD(x, reftb, method = "contig", stat = "mean", bwadjust = bwadjust, minWindows = minWindows, plot_thinning = plot_thinning, epsilon = epsilon, summary_stat = "mean")
+  # internally set options
+  stat = "mean" # param estimates and BFs are averaged over the merged contiguous regions (otherwise we extract the central window estimates)
+  epsilon = 1e-15
+  method = "contig" # contiguity detection method, either "contig" (recommended) or "density"
+  
+  Y <- thin_internal(x, reftb, method = method, stat = stat, bwadjust = bwadjust, minWindows = minWindows, plot_thinning = plot_thinning, epsilon = epsilon, summary_stat = summary_stat)
   
   return(Y)
   
-  #Y <<- Y
-  #obs <<- obs
-  
-  template <- obs$template
-  PAC <- obs$obsData
+  template <- x$template
+  PAC <- x$obsData
   
   H <- Y$estimation
   if (is.null(H) || nrow(H)==0) return(Y)
@@ -53,9 +73,9 @@ thin <- function(x, reftb, method = "contig", stat = "mean", bwadjust = 1, minWi
   return(Y)
 }
 
-#' @title Thinning
-#' @export
-thin_SIMPLEGOOD <- function(x, reftb, method = "contig", stat = "mean", bwadjust = 1, minWindows = 1, plot_thinning = F, epsilon = 1e-15, summary_stat = "mean") {
+#' @title Thinning - internal procedure
+#' @keywords internal
+thin_internal <- function(x, reftb, method = "contig", stat = "mean", bwadjust = 1, minWindows = 1, plot_thinning = F, epsilon = 1e-15, summary_stat = "mean") {
   ## output==list(density=NULL, estimation=NULL) means ' all is "i0" ' (by Ho-conservatism)
   
   AVALL <- x$adjVals
@@ -255,6 +275,7 @@ thin_SIMPLEGOOD <- function(x, reftb, method = "contig", stat = "mean", bwadjust
     RET$density <- RET$density[euRows,]
   }
 
-  return(RET)
+RET$estimation$sweepAgeSynth <- NULL # 24 01 2017
+  return(RET$estimation)
 }
 

@@ -2,7 +2,7 @@
 % Please edit documentation in R/scan.R
 \name{impute}
 \alias{impute}
-\title{impute model based on Bayes Factors}
+\title{Assign a model based on the Bayes Factors}
 \usage{
 impute(postproba, cutoff)
 }

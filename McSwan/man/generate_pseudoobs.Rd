@@ -4,49 +4,52 @@
 \alias{generate_pseudoobs}
 \title{Generates pseudo-observed genomic fragments under arbitrary demographic histories with and without positive sweeps}
 \usage{
-generate_pseudoobs(reftb, nSimul = 50, sweepingIsl = NULL, recRate,
-  sweepAge = NULL, L = NULL, sweepPos = 0.5, Smu = 0.01, nReps = 1,
-  verbose = FALSE, doSFS = TRUE, default_sweepAge_prior_func = "rlogunif",
-  save_each_file = FALSE)
+generate_pseudoobs(reftb, nSimul, L, recRate, sweepingIsl = NULL,
+  sweepAge = NULL, sweepPos = 0.5, Smu = NULL, nReps = 1,
+  verbose = FALSE, doSFS = TRUE, default_sweepAge_prior_func = "runif")
 }
 \arguments{
 \item{reftb}{an initialized \emph{referenceTable} object}
 
-\item{nSimul}{(integer) number of independent genomic fragments to simulate}
+\item{nSimul}{(integer) number of independent genomic fragments to simulate for each evolutionary model}
 
-\item{recRate}{(special list) prior distribution for the recombination rates (see \link{Details})}
+\item{L}{(integer) genomic fragment length (in base pairs) (should be significantly higher than the \code{windowSize} so that McSwan can perform a sliding-window scan)}
 
-\item{sweepAge}{(special list) prior distribution for the sweep ages (scaled in generations before present) (if \code{NULL} and the number of demes is superior to 2, the prior distribution will be automatically set, otherwise it is mandatory to specify the distribution manually, see \link{Details})}
+\item{recRate}{(special list) prior distribution for the recombination rates (see \code{Details})}
 
-\item{L}{(integer) genomic fragment length (in base pairs); if \code{NULL}, the function will perform a non-sliding window validation; if not-\code{NULL}, the function will perform sliding window validation (closer to the genomic scan approach used to analyze observed dataset)}
+\item{sweepingIsl}{(array of integers) by default, McSwan will generate fragments under all population-specific sweep models; if you want to restrict the simulations of sweep models to some given populations, provide the population \bold{indices} in a vector; note that population indices correspond to their position under the \code{-I} switch of the \code{MS} command, and note that the index of the first population is \bold{1}}
 
-\item{sweepPos}{(numeric) relative position of the beneficial mutation (eg. for \eqn{sweepPos=0.5}, the beneficial mutation will be placed at the center of the genomic region)}
+\item{sweepAge}{(special list) prior distribution for the sweep ages (scaled in generations before present) (if \code{NULL} and the number of demes is superior to 2, the prior distribution will be automatically determined, otherwise it is mandatory to specify the distribution manually, see \link{Details})}
 
-\item{Smu}{forward mutation rate to the beneficial allele}
+\item{sweepPos}{(numeric) relative position of the beneficial mutation (eg. for \eqn{sweepPos=0.5}, the beneficial mutation will be located at the center of the genomic region)}
 
-\item{nReps}{(integer) number of simulations per parameter combination (by default 1, but you can increase it to reduce the stochasticity of the coalescent process, the function will automatically average the coalescent-generated multiSFSs)}
+\item{Smu}{forward mutation rate for the advantageous allele (per base per generation) of the beneficial allele; if \code{NULL} this rate will be equal to the mean mutation rate \eqn{\mu} used in \eqn{\theta}}
 
-\item{verbose}{(logical) whether to print all messages (TRUE) or not (FALSE)}
+\item{nReps}{(integer) number of replicates to simulate per parameter combination (by default \code{nReps=1}, but you can increase this value to reduce the stochasticity of the coalescent process, the function will automatically average the coalescent-generated site frequency spectra)}
 
-\item{doSFS}{(logical) whether to compute the multiSFS (TRUE) or not (FALSE)}
+\item{verbose}{(logical) verbose mode}
+
+\item{doSFS}{(logical) whether to compute the joint site frequency spectra associated to the genomic fragments (TRUE recommended)}
+
+\item{default_sweepAge_prior_func}{if \code{sweepAge = NULL} you can force here the prior distribution of the sweep ages (e.g. "runif" or "rlogunif"), however the distribution limits will still be automatically set}
 }
 \value{
-An object with special class (see below) containing in the \code{SFS} element: \itemize{
-\item multidimensional SFSs if \eqn{L = NULL} (class \code{validationTable})
-\item positional allele frequencies if \eqn{L != NULL} (class \code{slidingValidationTable})
-}
+An object of class \code{validationTable} containing positional allele counts in the \code{SFS} slot.
 }
 \description{
-Simulation based on Ewing's \emph{et al.} \code{msms}. Assumes very strong selection coefficients.
+Simulations performed with Ewing's \emph{et al.} \code{MSMS} software.
 }
 \details{
-Prior distributions must be specified using the following syntax: \code{list("P", arg1, arg2)} with \emph{P} the name of the distribution function (e.g. \code{\link{runif}} for the uniform distribution, \code{\link{rlogunif}} for the log-uniform; please make sure you have quoted the function name and removed the argument brackets); \emph{arg1} and \emph{arg2} respectively the first and second arguments of the function (e.g. for \code{runif} will be the lower and upper limits of the distribution). Note that if the upper and lower limits of the distribution are distant by more than 3 orders of magnitude in \emph{log10}, we advise to use the \code{rlogunif} distribution.
+Prior distributions must be specified using the following syntax: \code{list("P", arg1, arg2)} with \emph{P} the name of the distribution function (e.g. \code{\link{runif}} for the uniform distribution, \code{\link{rlogunif}} for the log-uniform; please make sure you have quoted the function name and removed the argument brackets); \emph{arg1} and \emph{arg2} respectively the first and second arguments of the function (e.g. for \code{runif} will be the lower and upper limits of the distribution). Note that if the upper and lower limits of the distribution are distant by more than 3 units in the \emph{log10} scale, it is recommended to use the \code{rlogunif} distribution.
 
 If you manually provide the prior distributions for the \bold{sweep ages}, you have to respect the following format: \itemize{
-\item specify a list of distribution-sublists, each distribution-sublist corresponding to the sweep age distribution for the specific deme(s) you provided in the \code{sweepingIsl} argument (indexed as they appear in the \code{ms} command) (if \eqn{sweepingIsl = NULL} you will need to provide the distribution-sublists for \bold{all} demes); for instance, for \eqn{sweepingIsl = c(1,2)}, one would specify: \code{list(list("rlogunif", T_1, TT_1), list("runif", T_2, TT_2))}.
+\item specify a list of distribution-sublists, each distribution-sublist corresponding to the sweep age distribution for the specific deme(s) you provided in the \code{sweepingIsl} argument (indexed as they appear in the \code{ms} command) (if \code{sweepingIsl = NULL} you will need to provide the distribution-sublists for \bold{all} demes); for instance, for \code{sweepingIsl = c(1,2)}, one would specify: \code{list(list("rlogunif", T_1, TT_1), list("runif", T_2, TT_2))}.
 }
 }
 \references{
 Ewing et Hermisson (2010) MSMS: a coalescent simulation program including recombination, demographic structure and selection at a single locus. \emph{Bioinformatics}.
+}
+\seealso{
+\code{\link{combine}} to combine outputs from parallelized \code{generate_pseudoobs} calls
 }
 

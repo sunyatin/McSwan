@@ -2,10 +2,44 @@
 % Please edit documentation in R/thinning.R
 \name{thin}
 \alias{thin}
-\title{new thinning}
+\title{Merge contiguous sweeps}
 \usage{
-thin(x, reftb, method = "contig", stat = "mean", bwadjust = 1,
-  minWindows = 1, plot_thinning = F, epsilon = 1e-15,
-  summary_stat = "mean", obs)
+thin(x, reftb, bwadjust = 1, minWindows = 1, summary_stat = "mean",
+  plot_thinning = FALSE)
+}
+\arguments{
+\item{x}{a dataframe returned by \code{\link{gscan}}}
+
+\item{reftb}{an initialized \code{referenceTable} object}
+
+\item{bwadjust}{(numeric) bandwidth coefficient, the algorithm will extend contiguity as far as \code{bwadjust * windowSize} from any focal window}
+
+\item{minWindows}{(integer) the minimum number of contiguous windows required to perform contiguity search}
+
+\item{summary_stat}{(string) the central statistic to average the parameter estimates of merged contiguous windows ("mean" recommended)}
+
+\item{plot_thinning}{(logical) plot a representation of the genomic fragment with the contiguous sweep regions}
+}
+\value{
+Returns a dataframe of the merged contiguous sweeps. One sweep per line, and in columns:
+\itemize{ 
+\item \code{\bold{sweep.center}} center of the contiguous sweep region
+\item \code{\bold{sweep.lbound}} first position of the contiguous sweep region
+\item \code{\bold{sweep.rbound}} last position of the contiguous sweep region
+\item \code{\bold{BF}} aggregated Bayes Factor of the contiguous sweep region
+\item \code{\bold{deme}} population detected to have experienced a selective sweep (given as "i" & index of the population in the \emph{MS} command)
+\item \code{\bold{sweepAge}} posterior estimate for the sweep age
+\item \code{\bold{sweepAge.IC.low}} lower boundary of the 95% credible interval for the sweep age estimation
+\item \code{\bold{sweepAge.IC.up}} upper boundary of the 95% credible interval for the sweep age estimation
+}
+}
+\description{
+This function merges contiguous regions detected by \code{\link{gscan}} as having experienced a selective sweep.
+}
+\examples{
+Please refer to the vignette.
+}
+\seealso{
+\code{\link{gscan}}
 }
 

@@ -14,14 +14,14 @@ linearize <- function(sfs) {
 }
 
 
-#' @title Get the null distribution of distances to some pseudo-observed datastes
+#' @title Get the null distribution of distances within a model
 #' @param x a model-specific multiSFS matrix
-#' @param n_dist_btsp_per_model number of distances to perform per model for computation of the null distribution
-#' @return A vector of null distances.
+#' @param n_dist_bstp_per_model number of distances to calculate per model to build the null distribution
+#' @return A vector of distances, giving an empirical null distribution.
 #' @keywords internal
-get_dists <- function(x, n_dist_btsp_per_model, abcTolerance) {
-  targets <- sample(1:nrow(x), n_dist_btsp_per_model, replace=T)
-  d <- rep(NA, n_dist_btsp_per_model)
+get_dists <- function(x, n_dist_bstp_per_model, abcTolerance) {
+  targets <- sample(1:nrow(x), n_dist_bstp_per_model, replace=T)
+  d <- rep(NA, n_dist_bstp_per_model)
   for (i in 1:length(targets)) {
     tp <- suppressWarnings(abc::abc(x[targets[i],], 
                                rep(1, nrow(x)-1), 
@@ -46,14 +46,15 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
   
   #if (!is.null(dim(param)) && ncol(param)>1) stop("PLS is computed against a single parameter andyou provided more than one parameter")
   param <- as.matrix(param)
+  cat("\n\n\t Model-specific PLS.\n")
 
   # normalize
   means <- apply(ss, 2, mean, na.rm=T)
   sds <- apply(ss, 2, sd, na.rm=T)
   euCols <- sds != 0
-  cat(paste("removed",sum(!euCols),"columns with zero variance\n"))
+  cat(paste("\t - Removed",sum(!euCols),"columns with zero variance.\n"))
   if (PLS_normalize) {
-    cat("\nmodel-specific standardization of multiSFS for PLS analysis\n")
+    cat("\t - Matrix Standardization.\n")
     ss <- t(apply(ss, 1, function(x) (x-means)/sds))
   }
   
@@ -63,7 +64,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
     colnames <- names(euCols)[euCols]
     QR <- qr(x = ss[,euCols], tol = 1e-7, LAPACK = FALSE)
     rank <- QR$rank
-    cat(paste("removed",sum(euCols)-rank,"collinear columns based on QR decomposition\n"))
+    cat(paste("\t - Removed",sum(euCols)-rank,"collinear columns, based on QR decomposition.\n"))
     euQRcols <- QR$pivot[1:rank]
     euQRcols <- colnames[euQRcols]
     euCols[!names(euCols)%in%euQRcols] <- FALSE
@@ -72,7 +73,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
   
     # detect collinear columns, if requested
     if (removeCollinearCols) {
-      cat("removing collinear columns in multiSFS\n")
+      cat("\t - Removing collinear columns using caret::findCorrelation algorithm.\n")
       nonCollin <- rep(TRUE, ncol(ss)); names(nonCollin) <- colnames(ss)
       tmp <- caret::findCorrelation(cor(ss[,euCols]), cutoff=.90, names=TRUE)
       nonCollin[names(nonCollin)%in%tmp] <- FALSE
@@ -89,7 +90,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
   ##### K SELECTION
   
   if (is.null(PLS_ncomp)) {
-    cat("\nAutomatic selection of the fittest number of PLS components\n")
+    cat("\t - Automatic selection of the fittest number of PLS components.\n")
     
     if ( maxPLSncomp >= ncol(ss)-1 ) maxPLSncomp <- ncol(ss)-1
     plsa <- pls::plsr(param ~ ss, scale = FALSE, validation = "CV", ncomp = maxPLSncomp)
@@ -143,11 +144,11 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
       PLS_ncomp <- which.max(d)
 
     }
-    cat(paste("\nFittest K for PLS:",PLS_ncomp,"\n"))
+    cat(paste("\t - Number of retained PLS components:",PLS_ncomp,"\n"))
   }
 
   # PLS
-  cat("\nPLS\n")
+  cat("\t - PLS computation.\n")
   pls <- pls::plsr(param ~ ss, scale = FALSE, validation = "none", ncomp = PLS_ncomp, model = F, x = F, y = F)
   pls$scores <- NULL
   pls.scores <- predict(pls, ss, type="scores")
@@ -160,43 +161,56 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
               "sd" = sds)
   rm(list=c("pls", "pls.scores", "means", "sds", "param")); invisible(gc(FALSE))
   
+  cat("\n\n")
   return(PLS)    
 }
 
 
-#' @title Dimension reduction for multidimensional SFSs
-#' @description Performs a series of dimensional reductions: LDA (for later model selection) and model-specific PLSs (for later parameter estimation).
-#' @param x (referenceTable) a reference table with \code{SFS} elements
-#' @param PLS_ncomp (integer) if NULL, automatically select the fittest number of PLS components, else an integer to manually set the number of components to retain
-#' @param PLS_normalize (logical) whether to normalize the multiSFSs prior to PLS analysis (TRUE is recommended)
-#' @param removeCollinearCols (logical) whether to remove collinear columns across the multiSFSs (TRUE is recommended for LDA analysis)
-#' @param doPLSrecRate (logical) whether to regress (in addition to the sweep ages) onto the recombination parameter in the PLS analyses (since the recombination rate is considered a nuisance parameter, it can be sometimes useful to discard it from the PLS analysis)
-#' @param n_dist_bstp_per_model (integer) number of jacknifes to perform per model to compute the null distribution of distances for later goodness-of-fit tests
-#' @param relativeSFS (logical) if TRUE, will use relative SFS, else will use absolute SFS (with absolute SNP counts per frequency class) (FALSE is recommended)
-#' @param nonvarTolerance (numeric) variance threshold across the multiSFSs for a given frequency class, if the variance is below this threshold, the frequency class will be discarded for LDA analysis
-#' @param abcTolerance (numeric < 1) ABC tolerance ratio for the distance-based goodness-of-fit test (\emph{cf. n_dist_btsp_per_model} and see \code{\link{abc}})
-#' @param plot_PLScv (logical) if TRUE, will plot the cross-validation graphs of the PLS
-#' @return An object of class \code{referenceTable} with filled-in \code{DIMREDUC} element.
+#' @title Dimension reduction prior to approximate Bayesian computation
+#' @description Reduces the dimension of the summary statistics (joint multidimensional allele frequency spectra) prior to ABC model selection (through linear discriminant analysis) and ABC parameter estimation (through model-specific partial least square regressions). This function is to be run after \code{\link{coalesce}}.
+#' @param x a \code{referenceTable} object with non-empty \code{PRIORS} and \code{SFS} slots
+
+#' @param removeCollinearCols (logical) whether to remove collinear columns of the site frequency spectra prior to LDA & PLS dimension reduction (TRUE is recommended)
+#' @param relativeSFS (logical) whether to rescale the site frequency spectra by their SNP content (see Details) 
+
+#' @param LDA_minVariance (numeric) minimal variance across models' simulations for a given SFS bin (if the variance is inferior or equal to this value, the SFS bin will be discarded from LDA analysis)
+#' @param LDA_tol (numeric) a tolerance to decide if a matrix is singular, see \code{?lda}
+
+#' @param PLS_normalize (logical) whether to normalize the spectra prior to PLS analysis (TRUE is recommended)
+#' @param PLS_ncomp (integer) if NULL, automatically select the fittest number of PLS components, else an integer to manually set the number of retained components
+#' @param PLS_maxncomp (integer) maximum number of PLS components to calculate before selecting the best set of features
+#' @param plot_PLScv (logical) if TRUE, will render the cross-validation graphs of the PLS
+
+#' @param GOF_n (integer) estimate size of the null distribution for later window goodness-of-fit tests
+#' @param GOF_abcTol (numeric between 0 and 1) ABC tolerance ratio for the calculation of null distance distributions, ideally should equal the ABC tolerance for model selection (see \code{\link{abc}})
+
+#' @return An object of class \code{referenceTable} with filled-in \code{DIMREDUC} slot.
+#' @seealso \code{\emph{coalesce}}, \code{\emph{plsr}}, \code{\emph{lda}}, \code{\emph{abc}}
+#' @examples Please refer to the vignette.
 #' @export
 dim_reduction <- function(x,
+						# REFTB PRE-PROCESSING
+                          relativeSFS,
                           removeCollinearCols = TRUE,
-                          tolLDA = 1e-4,
-                          minSDlda = 0,
-                          
+						#LDA
+                          LDA_minVariance = 0,
+						  LDA_tol = 1e-4,
+						#PLS
                           PLS_normalize = TRUE,
                           PLS_ncomp = NULL,
-                          doPLSrecRate = TRUE,
-                          
-                          n_dist_bstp_per_model = 2e3,
-                          relativeSFS = FALSE,
-                          nonvarTolerance = 1.0e-4,
-                          abcTolerance = .01,
-                          
-                          QR_multicollinearity = TRUE,
-                          
-                          plot_PLScv = FALSE) {
+                          PLS_maxncomp = 100,
+                          PLS_plotCV = FALSE,
+						# NULL DISTRIB OF DISTANCES
+                          GOF_n = 2000,
+                          GOF_abcTol = .01 ) {
   
-  if (class(x)!="referenceTable"||is.null(x$SFS)) stop("x is not a referenceTable object or its SFS element is NULL")
+  if (class(x)!="referenceTable"||is.null(x$SFS)) stop("x is not a referenceTable object or its SFS slot is empty")
+  
+  # internally set options
+  QR_multicollinearity = TRUE # whether multicollinearity should be detected by QR decomposition or not (TRUE is recommended)
+  doPLSrecRate = FALSE # whether to regress (in addition to the sweep ages) onto the recombination parameter in the PLS analyses (since the recombination rate is considered a nuisance parameter, it can be sometimes useful to discard it from the PLS analysis)
+  tolLDA = 1e-4 # MASS::lda tolerance
+  
   
   x$DIMREDUC <- list()
   x$DIMREDUC$GENERAL <- list(relativeSFS = relativeSFS, 
@@ -205,7 +219,7 @@ dim_reduction <- function(x,
   
   # relativize multiSFS, if requested
   if (relativeSFS) {
-    cat("\nLower-dimensionned multiSFS is computed based on relative fractions of SNPs")
+    cat("\nRELATIVE SFS. The joint site frequency spectra will be scaled by their SNP content.\n")
     sfs <- lapply(x$SFS, function(z) {
       t(apply(z, 1, function(y) {
         sm <- sum(y, na.rm = TRUE)
@@ -214,6 +228,7 @@ dim_reduction <- function(x,
       }))
     })
   } else {
+    cat("\nABSOLUTE SFS. The joint site frequency spectra will _not_ be scaled by their SNP content.\n")
     sfs <- x$SFS
   }
 
@@ -222,7 +237,7 @@ dim_reduction <- function(x,
   ### LDA ###
   ###########
   
-  cat("\nAcross-model LDA\n")
+  cat("\n\n>>> LDA\n\nMatrix preparation.\n")
   lsfs <- linearize(sfs); modelIndices <- lsfs$model_indices; lsfs <- lsfs$sfs
   invisible(gc(F))
   
@@ -230,14 +245,14 @@ dim_reduction <- function(x,
     
     # remove 0-varianced columns
     sds <- apply(lsfs, 2, function(x) sqrt(var(x, na.rm=T)))
-    euCols <- sds > minSDlda
-    cat(paste("removed",sum(!euCols),"columns with zero variance\n"))
+    euCols <- sds > LDA_minVariance
+    cat(paste("\t- Removed",sum(!euCols),"columns with zero variance.\n"))
     
     # perform QR decomposition
     colnames <- names(euCols)[euCols]
     QR <- qr(x = lsfs[,euCols], tol = 1e-7, LAPACK = FALSE)
     rank <- QR$rank
-    cat(paste("removed",sum(euCols)-rank,"collinear columns based on QR decomposition\n"))
+    cat(paste("\t- Removed",sum(euCols)-rank,"collinear columns, based on QR decomposition.\n"))
     euQRcols <- QR$pivot[1:rank]
     euQRcols <- colnames[euQRcols]
     euCols[!names(euCols)%in%euQRcols] <- FALSE
@@ -246,8 +261,8 @@ dim_reduction <- function(x,
   
     # detect zero-varianced columns
     sds <- apply(lsfs, 2, sd, na.rm=T)
-    euCols <- sds >= nonvarTolerance
-    cat(paste("removed",sum(!euCols),"columns with near zero variance\n"))
+    euCols <- sds > LDA_minVariance
+    cat(paste("\t- Removed",sum(!euCols),"columns with near zero variance.\n"))
     
     if (F) {
     print(table(euCols))
@@ -255,7 +270,7 @@ dim_reduction <- function(x,
     md <- unique(modelIndices)
     for (i in seq_along(md)) {
       print(i)
-      TMP <- TMP * apply(lsfs[modelIndices==md[i],], 2, function(x) sd(x, na.rm=T) > nonvarTolerance)
+      TMP <- TMP * apply(lsfs[modelIndices==md[i],], 2, function(x) sd(x, na.rm=T) > LDA_minVariance)
     }
     euCols <- as.logical(euCols * TMP)
     print(table(euCols))
@@ -264,7 +279,7 @@ dim_reduction <- function(x,
     
     # detect collinear columns, if requested
     if (removeCollinearCols) {
-      cat("removing collinear columns in multiSFS\n")
+      cat("\t - Removing collinear columns using caret::findCorrelation algorithm.\n")
       nonCollin <- rep(TRUE, ncol(lsfs)); names(nonCollin) <- colnames(lsfs)
       tmp <- caret::findCorrelation(cor(lsfs[,euCols]), cutoff=.9, names=TRUE)
       nonCollin[names(nonCollin)%in%tmp] <- FALSE
@@ -275,21 +290,20 @@ dim_reduction <- function(x,
   }
   
   # LDA
-  print('lda')
+  cat('LDA computation.\n')
   lda <- MASS::lda(x=lsfs[,euCols], grouping=modelIndices, tol=tolLDA)
   ldaScores <- predict(lda, lsfs[,euCols])$x
   if (F) {
-  print('pca')
+  cat('PCA computation.\n')
   lda <- prcomp(lsfs[,euCols], retx=F, center=F, scale.=F, tol=.1)
-  print('predict pca x')
   ldaScores <- predict(lda, lsfs[,euCols])
-  print(dim(ldaScores))
+  cat(dim(ldaScores))
   }
   
   # compute null distrib of distances for each model
-  cat("computing null distribution of distances for future goodness of fit tests\n")
+  cat("Computation of per-model null distance distributions, for future goodness-of-fit tests.\n")
   
-  dists <- by(ldaScores, modelIndices, function(x) get_dists(x, n_dist_bstp_per_model, abcTolerance))  
+  dists <- by(ldaScores, modelIndices, function(x) get_dists(x, GOF_n, GOF_abcTol))  
   
   # store results
   x$DIMREDUC$LDA <- list("model" = lda, 
@@ -305,9 +319,10 @@ dim_reduction <- function(x,
   ### PLS ###
   ###########
   
-  cat("\nModel-specific PLS's\n")
+  cat("\n>>> PLS\n")
   
-  colz <- c("sweepAge", "recRate"); if (!doPLSrecRate) colz <- c("sweepAge")
+  colz <- c("sweepAge", "recRate")
+  if (doPLSrecRate==FALSE) colz <- c("sweepAge")
 
   PLS <- lapply(as.list(names(x$PRIORS)), function(z) {
     get_pls(x$PRIORS[[z]][,colz,drop=FALSE],
@@ -315,7 +330,8 @@ dim_reduction <- function(x,
             PLS_normalize,
             removeCollinearCols,
             PLS_ncomp,
-            plot_PLScv,
+            PLS_plotCV,
+            maxPLSncomp = PLS_maxncomp,
             deme = z,
             QR_multicollinearity = QR_multicollinearity)
   })
@@ -329,7 +345,7 @@ dim_reduction <- function(x,
 }
 
 
-#' @title Project an observed multiSFS onto LDA/PLS components stored in a referenceTable object
+#' @title Project an observed multiSFS onto LDA/PLS axes, stored in a referenceTable object
 #' @param reftb a reference table (class \emph{referenceTable}) with non-NULL DIMREDUC element
 #' @param target the observed multiSFS
 #' @param method (string) either "LDA" (model selection) or "PLS" (parameter estimation)

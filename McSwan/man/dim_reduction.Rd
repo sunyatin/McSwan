@@ -2,39 +2,46 @@
 % Please edit documentation in R/dimension_reduction.R
 \name{dim_reduction}
 \alias{dim_reduction}
-\title{Dimension reduction for multidimensional SFSs}
+\title{Dimension reduction prior to approximate Bayesian computation}
 \usage{
-dim_reduction(x, removeCollinearCols = TRUE, tolLDA = 1e-04, minSDlda = 0,
-  PLS_normalize = TRUE, PLS_ncomp = NULL, doPLSrecRate = TRUE,
-  n_dist_bstp_per_model = 2000, relativeSFS = FALSE,
-  nonvarTolerance = 1e-04, abcTolerance = 0.01,
-  QR_multicollinearity = TRUE, plot_PLScv = FALSE)
+dim_reduction(x, relativeSFS, removeCollinearCols = TRUE,
+  LDA_minVariance = 0, LDA_tol = 1e-04, PLS_normalize = TRUE,
+  PLS_ncomp = NULL, PLS_maxncomp = 100, PLS_plotCV = FALSE,
+  GOF_n = 2000, GOF_abcTol = 0.01)
 }
 \arguments{
-\item{x}{(referenceTable) a reference table with \code{SFS} elements}
+\item{x}{a \code{referenceTable} object with non-empty \code{PRIORS} and \code{SFS} slots}
 
-\item{removeCollinearCols}{(logical) whether to remove collinear columns across the multiSFSs (TRUE is recommended for LDA analysis)}
+\item{relativeSFS}{(logical) whether to rescale the site frequency spectra by their SNP content (see Details)}
 
-\item{PLS_normalize}{(logical) whether to normalize the multiSFSs prior to PLS analysis (TRUE is recommended)}
+\item{removeCollinearCols}{(logical) whether to remove collinear columns of the site frequency spectra prior to LDA & PLS dimension reduction (TRUE is recommended)}
 
-\item{PLS_ncomp}{(integer) if NULL, automatically select the fittest number of PLS components, else an integer to manually set the number of components to retain}
+\item{LDA_minVariance}{(numeric) minimal variance across models' simulations for a given SFS bin (if the variance is inferior or equal to this value, the SFS bin will be discarded from LDA analysis)}
 
-\item{doPLSrecRate}{(logical) whether to regress (in addition to the sweep ages) onto the recombination parameter in the PLS analyses (since the recombination rate is considered a nuisance parameter, it can be sometimes useful to discard it from the PLS analysis)}
+\item{LDA_tol}{(numeric) a tolerance to decide if a matrix is singular, see \code{?lda}}
 
-\item{n_dist_bstp_per_model}{(integer) number of jacknifes to perform per model to compute the null distribution of distances for later goodness-of-fit tests}
+\item{PLS_normalize}{(logical) whether to normalize the spectra prior to PLS analysis (TRUE is recommended)}
 
-\item{relativeSFS}{(logical) if TRUE, will use relative SFS, else will use absolute SFS (with absolute SNP counts per frequency class) (FALSE is recommended)}
+\item{PLS_ncomp}{(integer) if NULL, automatically select the fittest number of PLS components, else an integer to manually set the number of retained components}
 
-\item{nonvarTolerance}{(numeric) variance threshold across the multiSFSs for a given frequency class, if the variance is below this threshold, the frequency class will be discarded for LDA analysis}
+\item{PLS_maxncomp}{(integer) maximum number of PLS components to calculate before selecting the best set of features}
 
-\item{abcTolerance}{(numeric < 1) ABC tolerance ratio for the distance-based goodness-of-fit test (\emph{cf. n_dist_btsp_per_model} and see \code{\link{abc}})}
+\item{GOF_n}{(integer) estimate size of the null distribution for later window goodness-of-fit tests}
 
-\item{plot_PLScv}{(logical) if TRUE, will plot the cross-validation graphs of the PLS}
+\item{GOF_abcTol}{(numeric between 0 and 1) ABC tolerance ratio for the calculation of null distance distributions, ideally should equal the ABC tolerance for model selection (see \code{\link{abc}})}
+
+\item{plot_PLScv}{(logical) if TRUE, will render the cross-validation graphs of the PLS}
 }
 \value{
-An object of class \code{referenceTable} with filled-in \code{DIMREDUC} element.
+An object of class \code{referenceTable} with filled-in \code{DIMREDUC} slot.
 }
 \description{
-Performs a series of dimensional reductions: LDA (for later model selection) and model-specific PLSs (for later parameter estimation).
+Reduces the dimension of the summary statistics (joint multidimensional allele frequency spectra) prior to ABC model selection (through linear discriminant analysis) and ABC parameter estimation (through model-specific partial least square regressions). This function is to be run after \code{\link{coalesce}}.
+}
+\examples{
+Please refer to the vignette.
+}
+\seealso{
+\code{\emph{coalesce}}, \code{\emph{plsr}}, \code{\emph{lda}}, \code{\emph{abc}}
 }
 

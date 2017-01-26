@@ -2,41 +2,39 @@
 % Please edit documentation in R/scan.R
 \name{analyze}
 \alias{analyze}
-\title{For a single genomic window, detect sweep and estimate sweep age, if appropriates}
+\title{Sweep detection & sweep age estimation for a single genomic region}
 \usage{
-analyze(target, reftb, plot_simCloud = FALSE, minSNP = 2, tolABC = 0.01,
-  tolGFIT = 0.1, cutoff = 5, doESTIMATION = T, verbose = F,
-  forceESTIMATION = F)
+analyze(target, reftb, minSNP = 2, tolABC = 0.01, tolGFIT = 0.05,
+  cutoff = 5, plot_simCloud = FALSE, verbose = F)
 }
 \arguments{
-\item{target}{(array or single-row matrix or dataframe) the multiSFS of the target genomic window}
+\item{target}{multidimensional joint site-frequency-spectra of the target genomic window}
 
-\item{reftb}{a \emph{referenceTable} object, with activated \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements}
+\item{reftb}{a \code{referenceTable} object, with non-empty \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements}
 
-\item{plot_simCloud}{(logical) whether to plot the observed dataset among the cloud of simulations datasets in the space of the retained LDA components}
+\item{minSNP}{(integer) minimum number of within-window SNPs; if the number of within-window SNPs \code{< minSNP}, the function will return \code{NA}}
 
-\item{minSNP}{(integer) minimum number of SNPs required in the window to detect sweep; if the number of SNPs in the window is \eqn{n < minSNP}, the function will return \code{NA}}
+\item{tolABC}{(numeric or an array of 2 elements, values between 0 and 1) if a single numeric value, the tolerance ratio for both sweep detection and sweep estimation (see \code{\link{postpr}} and \code{\link{abc}}); if an array of 2 numeric elements, the first one will be the tolerance ratio for sweep detection (see \code{\link{postpr}}) and the second one for sweep estimation (see \code{\link{abc}})}
 
-\item{tolABC}{(numeric or an array of 2 elements) (values must be between 0 and 1) if a single numeric value, the tolerance ratio for both sweep detection and sweep estimation (see \code{\link{postpr}} and \code{\link{abc}}); if an array of 2 numeric elements, the first one will be the tolerance ratio for sweep detection (see \code{\link{postpr}}) and the second one for sweep estimation (see \code{\link{abc}})}
+\item{tolGFIT}{(numeric between 0 and 1) significance level for the goodness-of-fit test, ie. if \code{p-value(GoF) < tolGFIT}, we reject Ho: "The observed dataset falls within the null distribution of distances"; i.e. the observed dataset is not explainable by a given evolutionary model; if you want to disable the GoF test, set \code{tolGFIT = 0}}
 
-\item{tolGFIT}{(numeric between 0 and 1) the tolerance ratio for goodness-of-fit test (should be equal to the one specified in \code{\link{dim_reduction}})}
+\item{cutoff}{(numeric) the Bayes Factor cut-off value above which a window is assigned to the fittest model}
 
-\item{cutoff}{(numeric) the Bayes Factor cutoff value to decide that the sweep model under a specific deme is significantly more likely than the other competing models}
+\item{plot_simCloud}{(logical) plot the observed dataset amid the simulated ones, in the space of the retained LDA components}
 
-\item{doESTIMATION}{(logical) whether to do the sweep estimation in addition to the sweep detection}
-
-\item{verbose}{(logical) whether to print all messages (TRUE) or not (FALSE)}
+\item{verbose}{(logical) verbose mode}
 }
 \value{
-A list with 4 elements:
+A list of 4 elements:
 \itemize{
-\item \code{sweepingIsland} the deme which has likely undergone a recent positive sweep
-\item \code{BayesFactir} the Bayes Factor in favour of this corresponding model
-\item \code{params} a vector of point estimates for the sweep age (\code{sweepAge}) and recombination rate (\code{recRate})
-\item \code{ic} a vector of the lower and upper limits of the 95\% credible intervals for each point estimate (\code{sweepAge} and \code{recRate})
+\item \code{sweepingIsland} the population which has experienced a recent positive sweep
+\item \code{BayesFactor} the Bayes Factor in favour of the model
+\item \code{params} point estimate for (\code{sweepAge})
+\item \code{ic} a vector giving the lower and upper limits of the 95\% credible intervals for (\code{sweepAge}
 }
 }
 \seealso{
-\code{\link{gscan}} for iterating this function along the genome
+\code{\link{gscan}} for iterating this function by sliding windows along the genome
 }
+\keyword{internal}
 

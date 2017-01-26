@@ -2,7 +2,7 @@
 % Please edit documentation in R/coalesce.R
 \name{get_size}
 \alias{get_size}
-\title{Extract the deme effective size juste before an event time-scaled age}
+\title{Extract the deme effective sizes just before an event time-scaled age}
 \usage{
 get_size(ms, islandIndex, eventAge)
 }
@@ -11,14 +11,10 @@ get_size(ms, islandIndex, eventAge)
 
 \item{islandIndex}{the index of the focal island}
 
-\item{eventAge}{the age of the event, scaled in 4No}
+\item{eventAge}{the age of the event, scaled in units of 4No}
 }
 \value{
-the size coefficient in reference to No
-#@export
-}
-\description{
-v1: only takes into account "-en" (perspectives: "-eN")
+the resizing coefficient, in reference to No
 }
 \keyword{internal}
 

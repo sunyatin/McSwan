@@ -2,17 +2,17 @@
 % Please edit documentation in R/dimension_reduction.R
 \name{get_dists}
 \alias{get_dists}
-\title{Get the null distribution of distances to some pseudo-observed datastes}
+\title{Get the null distribution of distances within a model}
 \usage{
-get_dists(x, n_dist_btsp_per_model, abcTolerance)
+get_dists(x, n_dist_bstp_per_model, abcTolerance)
 }
 \arguments{
 \item{x}{a model-specific multiSFS matrix}
 
-\item{n_dist_btsp_per_model}{number of distances to perform per model for computation of the null distribution}
+\item{n_dist_bstp_per_model}{number of distances to calculate per model to build the null distribution}
 }
 \value{
-A vector of null distances.
+A vector of distances, giving an empirical null distribution.
 }
 \keyword{internal}
 

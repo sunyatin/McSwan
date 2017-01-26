@@ -2,8 +2,9 @@
 % Please edit documentation in R/miscellenaous.R
 \name{exact}
 \alias{exact}
-\title{Exact prior distrib}
+\title{Format a manually defined prior distribution as it is.}
 \usage{
 exact(n, classes)
 }
+\keyword{internal}
 

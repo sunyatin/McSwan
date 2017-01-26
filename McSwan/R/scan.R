@@ -1,5 +1,5 @@
 
-#' @title impute model based on Bayes Factors
+#' @title Assign a model based on the Bayes Factors
 #' @details postproba: a vector of model posterior probabilities, the first element must be the neutral model
 #' @details this vector must be NAMED by the model names ("i0", "i1", "i2", ... by default)
 #' @keywords internal
@@ -17,38 +17,36 @@ bf <- ifelse(sBF[i]>300, 300, sBF[i])
 }
 
 
-#' @title For a single genomic window, detect sweep and estimate sweep age, if appropriates
-#' @param target (array or single-row matrix or dataframe) the multiSFS of the target genomic window
-#' @param reftb a \emph{referenceTable} object, with activated \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements
-#' @param plot_simCloud (logical) whether to plot the observed dataset among the cloud of simulations datasets in the space of the retained LDA components
-#' @param minSNP (integer) minimum number of SNPs required in the window to detect sweep; if the number of SNPs in the window is \eqn{n < minSNP}, the function will return \code{NA}
-#' @param tolABC (numeric or an array of 2 elements) (values must be between 0 and 1) if a single numeric value, the tolerance ratio for both sweep detection and sweep estimation (see \code{\link{postpr}} and \code{\link{abc}}); if an array of 2 numeric elements, the first one will be the tolerance ratio for sweep detection (see \code{\link{postpr}}) and the second one for sweep estimation (see \code{\link{abc}})
-#' @param tolGFIT (numeric between 0 and 1) the tolerance ratio for goodness-of-fit test (should be equal to the one specified in \code{\link{dim_reduction}})
-#' @param verbose (logical) whether to print all messages (TRUE) or not (FALSE)
-#' @param cutoff (numeric) the Bayes Factor cutoff value to decide that the sweep model under a specific deme is significantly more likely than the other competing models
-#' @param doESTIMATION (logical) whether to do the sweep estimation in addition to the sweep detection
-#' @return A list with 4 elements:
+#' @title Sweep detection & sweep age estimation for a single genomic region
+#' @param target multidimensional joint site-frequency-spectra of the target genomic window
+#' @param reftb a \code{referenceTable} object, with non-empty \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements
+#' @param plot_simCloud (logical) plot the observed dataset amid the simulated ones, in the space of the retained LDA components
+#' @param verbose (logical) verbose mode
+#' @param minSNP (integer) minimum number of within-window SNPs; if the number of within-window SNPs \code{< minSNP}, the function will return \code{NA}
+#' @param tolABC (numeric or an array of 2 elements, values between 0 and 1) if a single numeric value, the tolerance ratio for both sweep detection and sweep estimation (see \code{\link{postpr}} and \code{\link{abc}}); if an array of 2 numeric elements, the first one will be the tolerance ratio for sweep detection (see \code{\link{postpr}}) and the second one for sweep estimation (see \code{\link{abc}})
+#' @param tolGFIT (numeric between 0 and 1) significance level for the goodness-of-fit test, ie. if \code{p-value(GoF) < tolGFIT}, we reject Ho: "The observed dataset falls within the null distribution of distances"; i.e. the observed dataset is not explainable by a given evolutionary model; if you want to disable the GoF test, set \code{tolGFIT = 0}
+#' @param cutoff (numeric) the Bayes Factor cut-off value above which a window is assigned to the fittest model
+#' @return A list of 4 elements:
 #' \itemize{
-#' \item \code{sweepingIsland} the deme which has likely undergone a recent positive sweep
-#' \item \code{BayesFactir} the Bayes Factor in favour of this corresponding model
-#' \item \code{params} a vector of point estimates for the sweep age (\code{sweepAge}) and recombination rate (\code{recRate})
-#' \item \code{ic} a vector of the lower and upper limits of the 95\% credible intervals for each point estimate (\code{sweepAge} and \code{recRate})
+#' \item \code{sweepingIsland} the population which has experienced a recent positive sweep
+#' \item \code{BayesFactor} the Bayes Factor in favour of the model
+#' \item \code{params} point estimate for (\code{sweepAge})
+#' \item \code{ic} a vector giving the lower and upper limits of the 95\% credible intervals for (\code{sweepAge}
 #' }
-#' @seealso \code{\link{gscan}} for iterating this function along the genome
-#' @export
-# sweep_detection (postpr)
+#' @seealso \code{\link{gscan}} for iterating this function by sliding windows along the genome
+#' @keywords internal
 analyze <- function(target, 
                     reftb,
-                    plot_simCloud = FALSE, 
                     minSNP = 2, 
                     tolABC = .01, 
-                    tolGFIT = .1,
+                    tolGFIT = .05,
                     cutoff = 5,
-                    doESTIMATION = T,
-                    verbose = F,
-                    forceESTIMATION = F) {
+                    plot_simCloud = FALSE,
+                    verbose = F) {
   
   abc_summary_stat <- "median"
+  doESTIMATION <- TRUE
+  plot_simCloud <- FALSE
 
   # target conditions
   if (is.null(reftb$DIMREDUC)) stop("You have not performed the dimension reduction!")
@@ -174,32 +172,39 @@ analyze <- function(target,
   }
 }
 
-#' @title Performs a genome scan, by detecting sweeps along sliding windows and estimating sweep ages
-#' @description This function performs a genome scan along sliding windows, for each window it estimates the Bayes Factor of the most likely sweep model in a specific deme \emph{vs.} the neutral model. If a sweep is detected, it carries on estimating the age of the sweep.
-#' @param X either an object with class \emph{observedDataset} produced by \code{get_SFS()} or with class \emph{validationTable}
-#' @param reftb a \emph{referenceTable} object, with activated \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements
-#' @param startPos (integer) the starting position of the genome scan
-#' @param lastPos (integer) the ending position of the genome scan
-#' @param windowSlide (integer) the sliding gap, if \code{NULL} then \emph{windowSlide} will be automatically set as equal the window size (therefore windows will not overlap)
-#' @param ... other arguments passed to \code{\link{analyze}}
-#' @return A dataframe with each row corresponding to one window and with the following columns: \itemize{
-#' \item \code{start.pos} the starting position of the window
-#' \item \code{end.pos} the ending position of the window
-#' \item \code{deme.under.sel} the deme which has been detected to have undergone recent positive sweep 
-#' \item \code{BayesFactor} the Bayes Factor for the sweep model of the sweeping deme (ie. \code{deme.under.sel})
-#' \item \code{sweepAge} the point estimate of the sweep age
-#' \item \code{recRate} the point estimate of the recombination rate between adjacent bases
-#' \item \code{sweepAge.IC.low} the lower bound of the 95\% credible interval for the sweep age estimation
-#' \item \code{sweepAge.IC.up} the upper bound of the 95\% credible interval for the sweep age estimation
-#' \item \code{recRate.IC.low} the lower bound of the 95\% credible interval for the recombination rate estimation
-#' \item \code{recRate.IC.up} the upper bound of the 95\% credible interval for the recombination rate estimation
-#' \item \code{failure} if the sweep detection has failed, specifies the reason: either because the window failed the requirement for a minimum number of SNPs (\code{minSNP}); failed the goodness-of-fit test (\code{goodnessOfFit}); failed the ABC estimation because of zero variance in the LDA/PLS components for instance (\code{ABC}); failed the discriminability between equally likely models (\code{modelDiscrimination}).
+
+#' @title Genome scan to detect selective sweeps and estimate sweep ages
+#' @description This function scans a genome to detect selective sweeps and estimate their age using sliding (possibly overlapping) windows of constant length. For each window, it estimates the Bayes factor of the most likely evolutionary model. If the window is successfully assigned to a model of selective sweep, the function estimates the age of the sweep.
+#' @param X either an object of class \code{observedDataset} produced by \code{\link{get_SFS}} or of class \code{validationTable} produced by \code{\link{generate_pseudoobs}}
+#' @param reftb a \code{referenceTable} object, with non-empty \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements
+#' @param minSNP (integer) minimum number of within-window SNPs; if the number of within-window SNPs \code{< minSNP}, the function will return \code{NA}
+#' @param tolABC (numeric or an array of 2 elements, values between 0 and 1) if a single numeric value, the tolerance ratio for both sweep detection and sweep estimation (see \code{\link{postpr}} and \code{\link{abc}}); if an array of 2 numeric elements, the first one will be the tolerance ratio for sweep detection (see \code{\link{postpr}}) and the second one for sweep estimation (see \code{\link{abc}})
+#' @param tolGFIT (numeric between 0 and 1) significance level for the goodness-of-fit test, ie. if \code{p-value(GoF) < tolGFIT}, we reject Ho: "The observed dataset falls within the null distribution of distances"; i.e. the observed dataset is not explainable by a given evolutionary model; if you want to disable the GoF test, set \code{tolGFIT = 0}
+#' @param cutoff (numeric) the Bayes Factor cut-off value above which a window is assigned to the fittest model
+#' @param startPos (integer) the start position of the genome scan (if \code{NULL} will start at the first SNP of your observed dataset)
+#' @param lastPos (integer) the stop position of the genome scan (if \code{NULL} will stop at the last SNP of your observed dataset)
+#' @param windowSlide (integer) the sliding gap, if \code{NULL} then \emph{windowSlide} will be set equal to the window size (windows will thus slide without overlap)
+#' @return A list of two elements: \code{res} and \code{adjVals}. The \code{adjVals} element contains a list of adjusted posterior values for the sweep ages, this information is used internally by the function \code{\link{thin}}. The \code{res} element contains a dataframe with genomic windows in rows. In columns: \itemize{
+#' \item \code{start.pos} the first position of the window
+#' \item \code{end.pos} the last position of the window
+#' \item \code{deme.under.sel} the population which has been detected to have experienced a recent positive sweep 
+#' \item \code{BayesFactor} the Bayes factor in favour of the selective model for \code{deme.under.sel}
+#' \item \code{sweepAge} the posterior estimate of the sweep age
+#' \item \code{recRate} the posterior estimate of the recombination rate between adjacent bases
+#' \item \code{sweepAge.IC.low} the lower limit of the 95\% credible interval for the sweep age estimation
+#' \item \code{sweepAge.IC.up} the upper limit of the 95\% credible interval for the sweep age estimation
+#' \item \code{recRate.IC.low} the lower limit of the 95\% credible interval for the recombination rate estimation
+#' \item \code{recRate.IC.up} the upper limit of the 95\% credible interval for the recombination rate estimation
+#' \item \code{failure} if the sweep detection has failed, it can be (i) because of an insufficient minimum number of SNPs (\code{"minSNP"}); (ii) because the null hypothesis of the goodness-of-fit test was rejected (\code{"goodnessOfFit"}); (iii) because the ABC failed due to zero variance in a LDA/PLS component (\code{"ABC"}); (iv) because various models were not distinguishable based on their Bayes factor (i.e. case of equally likely models) (\code{"modelDiscrimination"}).
 #' }
-#' @seealso \code{\link{thin}}, \code{\link{get_SFS}}
+#' @seealso \code{\link{thin}}, \code{\link{get_SFS}}, \code{\link{generate_pseudoobs}}, \code{\link{abc}}, \code{\link{postpr}}
 #' @export
-gscan <- function(X, reftb, minSNP, startPos = NULL, lastPos = NULL, windowSlide = NULL, printProgress = T, ...) {
+gscan <- function(X, reftb, minSNP, startPos = NULL, lastPos = NULL, windowSlide = NULL, tolABC = .01, tolGFIT = .05, cutoff = 5, printProgress = T) {
   
   # preciser et corriger si windowSize observed != windowSize reftb
+  
+  # internally set options
+  plot_simCloud <- FALSE
   
   if (class(X)=="validationTable") {
     
@@ -223,7 +228,7 @@ gscan <- function(X, reftb, minSNP, startPos = NULL, lastPos = NULL, windowSlide
     for (i in 1:nrow(TR_SFS)) {
       cat(i, ".")
 
-      A <- analyze(TR_SFS[i,], reftb, minSNP = minSNP, ...)
+      A <- analyze(TR_SFS[i,], reftb, minSNP = minSNP, tolABC = tolABC, tolGFIT = tolGFIT, cutoff = cutoff, plot_simCloud = plot_simCloud, verbose = FALSE)
      
       if (is.null(A)) stop("err!")
       if (!is.list(A) && A=="failedMINSNP") {
@@ -287,7 +292,10 @@ if (any(FAILURES)!=0) print(FAILURES)
       oSFS[names(tmp)] <- oSFS[names(tmp)] + tmp / 2
       oSFS <<- oSFS
       
-      A <- analyze(oSFS, reftb, minSNP = minSNP, ...)
+      #A <- analyze(oSFS, reftb, minSNP = minSNP, ...)
+	  A <- analyze(oSFS, reftb, minSNP = minSNP, tolABC = tolABC, tolGFIT = tolGFIT, cutoff = cutoff, plot_simCloud = plot_simCloud, verbose = FALSE)
+
+
       d <- NA; bf <- NA; est <- c(NA, NA); ic <- rep(NA, 4); fail <- NA; agevals <- NA
       if (is.null(A)) stop("err!")
       if (!is.list(A) && A=="failedMINSNP") {
@@ -333,185 +341,6 @@ if (any(FAILURES)!=0) print(FAILURES)
   
 }
 
-if (F) {
-  
-
-
-#!' @title Timming the sweep detections to get a confident point estimate for sweep ages
-#!' @export
-thin_density <- function(x, reftb, stat = "mean", bwadjust = 1, minWindows = 1, epsilon = 1e-15) {
-  
-  dn <- paste("i",deme,sep="")
-  
-  y <- subset(x, !is.na(deme.under.sel) & deme.under.sel == dn)
-  gr <- c(min(x$start.pos), max(x$end.pos))
-  ymid <- (y$start.pos+y$end.pos)/2
-  
-  if (is.null(nrow(y))||nrow(y)<minWindows) return(NA)
-  
-  if (is.null(bwadjust)) {
-    D <- density( ymid,
-               from = gr[1],
-               to = gr[2])
-  } else {
-    D <- density( ymid,
-                  bw = reftb$GENERAL$windowSize * bwadjust,
-                  from = gr[1],
-                  to = gr[2])
-  }
-  
-  plot(D, main="Gaussian spline of sweeped regions")
-  points(ymid, rep(0, length(ymid)), pch="|")
-  
-  D$y[D$y<epsilon] <- 0
-  
-  # derivate
-  dD <- list(x=D$x[-1], y=diff(D$y) / diff(D$x))
-  
-  # find near-zero intersection
-  dDy <- dD$y
-  zI <- sapply(2:(length(dDy)-1), function(j) dDy[j-1]>0&&dDy[j]>=0&&dDy[j+1]<0 ) # local maximum
-  zI <- c(FALSE, zI, FALSE)
-  
-  xleft <- dD$x[zI]
-  xright <- dD$x[c(FALSE, zI[-length(zI)])]
-  xP <- ( xleft + xright ) / 2
-  
-  # discardOrphanWindow? => still missing in the code
-  
-  idx <- sapply(xP, function(p) {
-    which.min( abs(ymid - p) )
-  })
-  
-  dy <- D$y
-  lims <- sapply(which(c(F,zI)), function(p) {
-    lm <- which(dy[1:p]<=epsilon)
-    lm <- lm[length(lm)]
-    
-    rm <- which(dy[p:length(dy)]<=epsilon) + (p-1)
-    rm <- rm[1]
-    
-    L <- which.min( abs(ymid - D$x[lm]) )
-    L <- ifelse(length(L)==0, min(y$start.pos), y$start.pos[L])
-    R <- which.min( abs(ymid - D$x[rm]) )
-    R <- ifelse(length(R)==0, max(y$end.pos), y$end.pos[R])
-    
-    return(c(L, R))
-  })
-  lims <- t(lims)
-  
-  ret <- data.frame(sweep.center=xP, 
-                    sweep.lbound = lims[,1],
-                    sweep.rbound = lims[,2],
-                    deme=deme, sweepAge=y$sweepAge[idx], 
-                    sweepAge.IC.low=y$sweepAge.IC.low[idx],
-                    sweepAge.IC.up=y$sweepAge.IC.up[idx])
-  return(list("density"=cbind("x"=D$x, "y"=D$y), "estimation"=ret))
-}
-
-
-#!' @title Thinning the sweep detections to get a confident point estimate for sweep ages
-#!' @export
-thin_contig <- function(x, reftb, stat = "mean", bwadjust = 1, minWindows = 1, epsilon = 1e-15) {
-    
-  dn <- paste("i",deme,sep="")
-    
-  dn <- paste("i",deme,sep="")
-  y <- subset(x, !is.na(deme.under.sel) & deme.under.sel == dn)
-  L <- reftb$GENERAL$windowSize
-  
-  if (is.null(nrow(y))||nrow(y)<minWindows) return(NA)
-
-  store <- TRUE
-  startp <- y[1,"start.pos"]
-  age <- age.low <- age.up <- bf <- c()
-  ret <- c()
-  for (i in 1:nrow(y)) {
-   
-    if (i>1) store <- ifelse( y[i,"start.pos"] - y[i-1,"start.pos"] > bwadjust * L, FALSE, TRUE)
-   
-    if (!store) {
-      if (stat=="mean") {
-        pe.Age <- mean(age)
-        pe.lAge <- mean(age.low)
-        pe.rAge <- mean(age.up)
-        pe.BF <- mean(bf)
-      } else {
-        ix <- which.min( abs(y$start.pos+y$end.pos)/2 - (startp+endp)/2 )
-        pe.Age <- age[ix]
-        pe.lAge <- age.low[ix]
-        pe.rAge <- age.up[ix]
-        pe.BF <- bf[ix]
-      }
-      add <- data.frame(sweep.center = (startp+endp)/2, 
-                        sweep.lbound = startp,
-                        sweep.rbound = endp,
-                        BF = pe.BF,
-                        deme=deme, 
-                        sweepAge = pe.Age, 
-                        sweepAge.IC.low = pe.lAge,
-                        sweepAge.IC.up = pe.rAge)
-      ret <- rbind(ret, add)
-      startp <- y[i,"start.pos"]
-      age <- age.low <- age.up <- bf <- c()
-    }
-    
-    endp <- y[i,"end.pos"]
-    age <- c(age, y[i,"sweepAge"])
-    age.low <- c(age.low, y[i,"sweepAge.IC.low"])
-    age.up <- c(age.up, y[i,"sweepAge.IC.up"])
-    bf <- c(bf, y[i,"BayesFactor"])
-    
-  }
-  
-  if (store) {
-    if (stat=="mean") {
-      pe.Age <- mean(age)
-      pe.lAge <- mean(age.low)
-      pe.rAge <- mean(age.up)
-      pe.BF <- mean(bf)
-    } else {
-      ix <- which.min( abs(y$start.pos+y$end.pos)/2 - (startp+endp)/2 )
-      pe.Age <- age[ix]
-      pe.lAge <- age.low[ix]
-      pe.rAge <- age.up[ix]
-      pe.BF <- bf[ix]
-    }
-    add <- data.frame(sweep.center = (startp+endp)/2, 
-                      sweep.lbound = startp,
-                      sweep.rbound = endp,
-                      BF = pe.BF,
-                      deme=deme, 
-                      sweepAge = pe.Age, 
-                      sweepAge.IC.low = pe.lAge,
-                      sweepAge.IC.up = pe.rAge)
-    ret <- rbind(ret, add)
-  }
-  
-  rgg <- c(x$start.pos[1], x$end.pos[nrow(x)])
-  ymid <- (y$start.pos+y$end.pos)/2
-  plot(ymid, rep(0, length(ymid)), pch="|", type="p", ylim=c(0,1), xlim=rgg)
-  segments(x0=ret$sweep.center, y0=0, y1=1, col="gray")
-  abline(v=diff(rgg)*.8, col="red")
-  
-  return(list("density"=cbind("x"=ret$sweep.center, "y"=ret$BF), "estimation"=ret))
-}
-
-#!' @title Thinning the sweep detections to get a confident point estimate for sweep ages
-#!' @export
-thin <- function(x, reftb, method, stat = "mean", ...) {
-
-  if (method=="density") {
-    y <- thin_density(x, reftb, stat = stat, ...)
-  } else if (method=="contig") {
-    y <- thin_contig(x, reftb, stat = stat, ...)
-  } else {
-    stop("no method provided")
-  }
-  return(y)
-}
-
-}
 
 
 

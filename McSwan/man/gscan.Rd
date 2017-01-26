@@ -2,43 +2,50 @@
 % Please edit documentation in R/scan.R
 \name{gscan}
 \alias{gscan}
-\title{Performs a genome scan, by detecting sweeps along sliding windows and estimating sweep ages}
+\title{Genome scan to detect selective sweeps and estimate sweep ages}
 \usage{
 gscan(X, reftb, minSNP, startPos = NULL, lastPos = NULL,
-  windowSlide = NULL, printProgress = T, ...)
+  windowSlide = NULL, tolABC = 0.01, tolGFIT = 0.05, cutoff = 5,
+  printProgress = T)
 }
 \arguments{
-\item{X}{either an object with class \emph{observedDataset} produced by \code{get_SFS()} or with class \emph{validationTable}}
+\item{X}{either an object of class \code{observedDataset} produced by \code{\link{get_SFS}} or of class \code{validationTable} produced by \code{\link{generate_pseudoobs}}}
 
-\item{reftb}{a \emph{referenceTable} object, with activated \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements}
+\item{reftb}{a \code{referenceTable} object, with non-empty \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements}
 
-\item{startPos}{(integer) the starting position of the genome scan}
+\item{minSNP}{(integer) minimum number of within-window SNPs; if the number of within-window SNPs \code{< minSNP}, the function will return \code{NA}}
 
-\item{lastPos}{(integer) the ending position of the genome scan}
+\item{startPos}{(integer) the start position of the genome scan (if \code{NULL} will start at the first SNP of your observed dataset)}
 
-\item{windowSlide}{(integer) the sliding gap, if \code{NULL} then \emph{windowSlide} will be automatically set as equal the window size (therefore windows will not overlap)}
+\item{lastPos}{(integer) the stop position of the genome scan (if \code{NULL} will stop at the last SNP of your observed dataset)}
 
-\item{...}{other arguments passed to \code{\link{analyze}}}
+\item{windowSlide}{(integer) the sliding gap, if \code{NULL} then \emph{windowSlide} will be set equal to the window size (windows will thus slide without overlap)}
+
+\item{tolABC}{(numeric or an array of 2 elements, values between 0 and 1) if a single numeric value, the tolerance ratio for both sweep detection and sweep estimation (see \code{\link{postpr}} and \code{\link{abc}}); if an array of 2 numeric elements, the first one will be the tolerance ratio for sweep detection (see \code{\link{postpr}}) and the second one for sweep estimation (see \code{\link{abc}})}
+
+\item{tolGFIT}{(numeric between 0 and 1) significance level for the goodness-of-fit test, ie. if \code{p-value(GoF) < tolGFIT}, we reject Ho: "The observed dataset falls within the null distribution of distances"; i.e. the observed dataset is not explainable by a given evolutionary model; if you want to disable the GoF test, set \code{tolGFIT = 0}}
+
+\item{cutoff}{(numeric) the Bayes Factor cut-off value above which a window is assigned to the fittest model}
 }
 \value{
-A dataframe with each row corresponding to one window and with the following columns: \itemize{
-\item \code{start.pos} the starting position of the window
-\item \code{end.pos} the ending position of the window
-\item \code{deme.under.sel} the deme which has been detected to have undergone recent positive sweep 
-\item \code{BayesFactor} the Bayes Factor for the sweep model of the sweeping deme (ie. \code{deme.under.sel})
-\item \code{sweepAge} the point estimate of the sweep age
-\item \code{recRate} the point estimate of the recombination rate between adjacent bases
-\item \code{sweepAge.IC.low} the lower bound of the 95\% credible interval for the sweep age estimation
-\item \code{sweepAge.IC.up} the upper bound of the 95\% credible interval for the sweep age estimation
-\item \code{recRate.IC.low} the lower bound of the 95\% credible interval for the recombination rate estimation
-\item \code{recRate.IC.up} the upper bound of the 95\% credible interval for the recombination rate estimation
-\item \code{failure} if the sweep detection has failed, specifies the reason: either because the window failed the requirement for a minimum number of SNPs (\code{minSNP}); failed the goodness-of-fit test (\code{goodnessOfFit}); failed the ABC estimation because of zero variance in the LDA/PLS components for instance (\code{ABC}); failed the discriminability between equally likely models (\code{modelDiscrimination}).
+A list of two elements: \code{res} and \code{adjVals}. The \code{adjVals} element contains a list of adjusted posterior values for the sweep ages, this information is used internally by the function \code{\link{thin}}. The \code{res} element contains a dataframe with genomic windows in rows. In columns: \itemize{
+\item \code{start.pos} the first position of the window
+\item \code{end.pos} the last position of the window
+\item \code{deme.under.sel} the population which has been detected to have experienced a recent positive sweep 
+\item \code{BayesFactor} the Bayes factor in favour of the selective model for \code{deme.under.sel}
+\item \code{sweepAge} the posterior estimate of the sweep age
+\item \code{recRate} the posterior estimate of the recombination rate between adjacent bases
+\item \code{sweepAge.IC.low} the lower limit of the 95\% credible interval for the sweep age estimation
+\item \code{sweepAge.IC.up} the upper limit of the 95\% credible interval for the sweep age estimation
+\item \code{recRate.IC.low} the lower limit of the 95\% credible interval for the recombination rate estimation
+\item \code{recRate.IC.up} the upper limit of the 95\% credible interval for the recombination rate estimation
+\item \code{failure} if the sweep detection has failed, it can be (i) because of an insufficient minimum number of SNPs (\code{"minSNP"}); (ii) because the null hypothesis of the goodness-of-fit test was rejected (\code{"goodnessOfFit"}); (iii) because the ABC failed due to zero variance in a LDA/PLS component (\code{"ABC"}); (iv) because various models were not distinguishable based on their Bayes factor (i.e. case of equally likely models) (\code{"modelDiscrimination"}).
 }
 }
 \description{
-This function performs a genome scan along sliding windows, for each window it estimates the Bayes Factor of the most likely sweep model in a specific deme \emph{vs.} the neutral model. If a sweep is detected, it carries on estimating the age of the sweep.
+This function scans a genome to detect selective sweeps and estimate their age using sliding (possibly overlapping) windows of constant length. For each window, it estimates the Bayes factor of the most likely evolutionary model. If the window is successfully assigned to a model of selective sweep, the function estimates the age of the sweep.
 }
 \seealso{
-\code{\link{thin}}, \code{\link{get_SFS}}
+\code{\link{thin}}, \code{\link{get_SFS}}, \code{\link{generate_pseudoobs}}, \code{\link{abc}}, \code{\link{postpr}}
 }
 

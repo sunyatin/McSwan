@@ -1,44 +1,48 @@
 
 #' @title Generates pseudo-observed genomic fragments under arbitrary demographic histories with and without positive sweeps
-#' @description Simulation based on Ewing's \emph{et al.} \code{msms}. Assumes very strong selection coefficients.
+#' @description Simulations performed with Ewing's \emph{et al.} \code{MSMS} software.
 #' @param reftb an initialized \emph{referenceTable} object
-#' @param nSimul (integer) number of independent genomic fragments to simulate
-#' @param L (integer) genomic fragment length (in base pairs); if \code{NULL}, the function will perform a non-sliding window validation; if not-\code{NULL}, the function will perform sliding window validation (closer to the genomic scan approach used to analyze observed dataset)
-#' @param sweepAge (special list) prior distribution for the sweep ages (scaled in generations before present) (if \code{NULL} and the number of demes is superior to 2, the prior distribution will be automatically set, otherwise it is mandatory to specify the distribution manually, see \link{Details})
-#' @param recRate (special list) prior distribution for the recombination rates (see \link{Details})
-#' @param sweepPos (numeric) relative position of the beneficial mutation (eg. for \eqn{sweepPos=0.5}, the beneficial mutation will be placed at the center of the genomic region)
-#' @param nReps (integer) number of simulations per parameter combination (by default 1, but you can increase it to reduce the stochasticity of the coalescent process, the function will automatically average the coalescent-generated multiSFSs)
-#' @param verbose (logical) whether to print all messages (TRUE) or not (FALSE)
-#' @param doSFS (logical) whether to compute the multiSFS (TRUE) or not (FALSE)
-#' @param Smu forward mutation rate to the beneficial allele
-#' @return An object with special class (see below) containing in the \code{SFS} element: \itemize{
-#' \item multidimensional SFSs if \eqn{L = NULL} (class \code{validationTable})
-#' \item positional allele frequencies if \eqn{L != NULL} (class \code{slidingValidationTable})
-#' }
+#' @param nSimul (integer) number of independent genomic fragments to simulate for each evolutionary model
+#' @param L (integer) genomic fragment length (in base pairs) (should be significantly higher than the \code{windowSize} so that McSwan can perform a sliding-window scan)
+#' @param sweepAge (special list) prior distribution for the sweep ages (scaled in generations before present) (if \code{NULL} and the number of demes is superior to 2, the prior distribution will be automatically determined, otherwise it is mandatory to specify the distribution manually, see \link{Details})
+#' @param recRate (special list) prior distribution for the recombination rates (see \code{Details})
+#' @param sweepPos (numeric) relative position of the beneficial mutation (eg. for \eqn{sweepPos=0.5}, the beneficial mutation will be located at the center of the genomic region)
+#' @param nReps (integer) number of replicates to simulate per parameter combination (by default \code{nReps=1}, but you can increase this value to reduce the stochasticity of the coalescent process, the function will automatically average the coalescent-generated site frequency spectra)
+#' @param verbose (logical) verbose mode
+#' @param doSFS (logical) whether to compute the joint site frequency spectra associated to the genomic fragments (TRUE recommended)
+#' @param Smu forward mutation rate for the advantageous allele (per base per generation) of the beneficial allele; if \code{NULL} this rate will be equal to the mean mutation rate \eqn{\mu} used in \eqn{\theta}
+#' @param sweepingIsl (array of integers) by default, McSwan will generate fragments under all population-specific sweep models; if you want to restrict the simulations of sweep models to some given populations, provide the population \bold{indices} in a vector; note that population indices correspond to their position under the \code{-I} switch of the \code{MS} command, and note that the index of the first population is \bold{1}
+#' @param default_sweepAge_prior_func if \code{sweepAge = NULL} you can force here the prior distribution of the sweep ages (e.g. "runif" or "rlogunif"), however the distribution limits will still be automatically set
+#' @return An object of class \code{validationTable} containing positional allele counts in the \code{SFS} slot.
 #'  
-#' @details Prior distributions must be specified using the following syntax: \code{list("P", arg1, arg2)} with \emph{P} the name of the distribution function (e.g. \code{\link{runif}} for the uniform distribution, \code{\link{rlogunif}} for the log-uniform; please make sure you have quoted the function name and removed the argument brackets); \emph{arg1} and \emph{arg2} respectively the first and second arguments of the function (e.g. for \code{runif} will be the lower and upper limits of the distribution). Note that if the upper and lower limits of the distribution are distant by more than 3 orders of magnitude in \emph{log10}, we advise to use the \code{rlogunif} distribution.
+#' @details Prior distributions must be specified using the following syntax: \code{list("P", arg1, arg2)} with \emph{P} the name of the distribution function (e.g. \code{\link{runif}} for the uniform distribution, \code{\link{rlogunif}} for the log-uniform; please make sure you have quoted the function name and removed the argument brackets); \emph{arg1} and \emph{arg2} respectively the first and second arguments of the function (e.g. for \code{runif} will be the lower and upper limits of the distribution). Note that if the upper and lower limits of the distribution are distant by more than 3 units in the \emph{log10} scale, it is recommended to use the \code{rlogunif} distribution.
 #' 
 #' If you manually provide the prior distributions for the \bold{sweep ages}, you have to respect the following format: \itemize{
-#' \item specify a list of distribution-sublists, each distribution-sublist corresponding to the sweep age distribution for the specific deme(s) you provided in the \code{sweepingIsl} argument (indexed as they appear in the \code{ms} command) (if \eqn{sweepingIsl = NULL} you will need to provide the distribution-sublists for \bold{all} demes); for instance, for \eqn{sweepingIsl = c(1,2)}, one would specify: \code{list(list("rlogunif", T_1, TT_1), list("runif", T_2, TT_2))}.
+#' \item specify a list of distribution-sublists, each distribution-sublist corresponding to the sweep age distribution for the specific deme(s) you provided in the \code{sweepingIsl} argument (indexed as they appear in the \code{ms} command) (if \code{sweepingIsl = NULL} you will need to provide the distribution-sublists for \bold{all} demes); for instance, for \code{sweepingIsl = c(1,2)}, one would specify: \code{list(list("rlogunif", T_1, TT_1), list("runif", T_2, TT_2))}.
 #' }
 #' 
 #' @references Ewing et Hermisson (2010) MSMS: a coalescent simulation program including recombination, demographic structure and selection at a single locus. \emph{Bioinformatics}.
+#' @seealso \code{\link{combine}} to combine outputs from parallelized \code{generate_pseudoobs} calls
 #' @export
 generate_pseudoobs <- function(reftb, 
-                               nSimul = 50, 
-                               sweepingIsl = NULL,
+                               nSimul, 
+                               L,
                                recRate, 
+                               sweepingIsl = NULL,
                                sweepAge = NULL,
-                               L = NULL,
                                sweepPos = .5,
-                               Smu = .01, 
+                               Smu = NULL, 
                                nReps = 1, 
                                verbose = FALSE, 
                                doSFS = TRUE,
-                               default_sweepAge_prior_func = "rlogunif",
-                               save_each_file = FALSE) {
+                               default_sweepAge_prior_func = "runif") {
+
+	# internally set options
+	save_each_file = FALSE
   
-  if (is.null(L)) { print("non-sliding validation") } else { print("sliding validation") }
+if (is.null(L)) stop("L must not be NULL")
+
+  if (is.null(L)) { print("non-sliding validation") } else { cat("Simulating pseudo-observed datasets for sliding validation.") }
   
   if (!is.list(recRate)) stop("recRate must be a single list with 3 elements, cf. documentation")
   if (is.list(recRate[[1]])) stop("recRate must be a single list with 3 elements, cf. documentation")
@@ -51,7 +55,8 @@ generate_pseudoobs <- function(reftb,
   valtb <- list(GENERAL = reftb$GENERAL,
                 PRIORS = list(),
                 SFS = list())
-  class(valtb) <- ifelse(is.null(L), "validationTable", "slidingValidationTable")
+  #class(valtb) <- ifelse(is.null(L), "validationTable", "slidingValidationTable")
+  class(valtb) <- "validationTable"
   valtb$GENERAL$nSimul <- nSimul
   
   # permanent parameters
@@ -63,11 +68,11 @@ generate_pseudoobs <- function(reftb,
   windowSize <- ifelse(is.null(L), reftb$GENERAL$windowSize, L)
   islandSizes <- reftb$GENERAL$islandSizes
   nIsl <- length(islandSizes)
-  
+
   # sweepAge format
   if (is.null(sweepAge)) {
     sweepAge <- reftb$GENERAL$sweepAgeDistrib
-    sweepAge <- lapply(sweepAge, function(x) { x[[1]] <- default_sweepAge_prior_func; return(x) })
+    #sweepAge <- lapply(sweepAge, function(x) { x[[1]] <- default_sweepAge_prior_func; return(x) })
   } else {
     if (!is.list(sweepAge)) stop("sweepAge must be a list of sub-lists, cf. documentation")
     if (!is.list(sweepAge[[1]])) stop("sweepAge must be a list of sub-lists, cf. documentation")
@@ -119,11 +124,14 @@ generate_pseudoobs <- function(reftb,
   for ( i in 1:length(isl4sim) ) {
     
     isl <- isl4sim[i]
-    cat(paste("\n\n\n>>>",isl,"\n\n\n"))
+    cat(paste("\n\n\n>>> Model ",isl,"\n\n\n"))
     
     SFS <- c()
     for ( s in 1:nSimul ) {
-      cat(s, ".")
+      if (verbose) {
+	  cat("\n")
+	  cat("==> ",s)
+	  } else { cat(s,"") }
       
       if (isl=="i0") {
         msms <- paste("-N",No,"-ms",ms)
@@ -171,7 +179,7 @@ SI <- paste(P[[isl]]$sweepAge[s]/(4*No), allIsl, beneFreq, collapse=" ")
         
         # command
         msms <- paste("-N",No,"-ms",msTmp,Sc,"-SI",SI,"-Sp",P[[isl]]$sweepPos[s])
-        if (!is.null(Smu)) msms <- paste(msms,"-Smu",Smu)
+        if (!is.null(Smu)) msms <- paste(msms,"-Smu", 4 * Smu * No)
         
         ###!
         msms <- paste(msms,"-oOC","-SForceKeep")
@@ -221,7 +229,7 @@ SI <- paste(P[[isl]]$sweepAge[s]/(4*No), allIsl, beneFreq, collapse=" ")
           if (valtb$GENERAL$folded==TRUE) cmd <- paste(cmd,"--fold")
           system(cmd, intern=F)
 
-          obs <- get_SFS(paste(tempDir,"/MSMS.txt", sep=""), ms)
+          obs <- get_SFS(paste(tempDir,"/MSMS.txt", sep=""), reftb)
           SFS <- c(SFS, list(obs))
           names(SFS)[[length(SFS)]] <- s
         }

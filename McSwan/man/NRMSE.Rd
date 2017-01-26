@@ -2,8 +2,20 @@
 % Please edit documentation in R/validationProcedures.R
 \name{NRMSE}
 \alias{NRMSE}
-\title{Computes the normalized root-mean-square error/deviation}
+\title{Computes the mean-normalized (or standardized) root mean square error (or deviation)}
 \usage{
 NRMSE(true, est)
 }
+\arguments{
+\item{true}{a vector of true numeric values}
+
+\item{est}{a vector of estimated numeric values}
+}
+\value{
+A numeric value corresponding to the NRMSE.
+}
+\references{
+Walther, B.A. & Moore, J.L. (2005). The concepts of bias, precision and accuracy, and their use in testing the performance of species richness estimators, with a literature review of estimator performance. Ecography, 28, 815-829.
+}
+\keyword{internal}
 
