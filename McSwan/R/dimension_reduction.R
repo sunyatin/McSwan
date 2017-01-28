@@ -385,10 +385,10 @@ project_target <- function(reftb, target, method, focalIsland = NULL) {
     euc <- reftb$DIMREDUC$LDA$euCols
     obs <- matrix(target[euc], nrow=1)
     colnames(obs) <- names(euc)[euc]
-    if (!LDA_fastDiag) {
-      obs <- predict(reftb$DIMREDUC$LDA$model, obs)$x
-    } else {
+    if (class(reftb$SFS[[1]]) == "dgCMatrix") {
       obs <- predict(reftb$DIMREDUC$LDA$model, obs)$Z
+    } else {
+      obs <- predict(reftb$DIMREDUC$LDA$model, obs)$x
     }
 
   } else if (method=="PLS") {
