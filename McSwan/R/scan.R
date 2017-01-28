@@ -46,7 +46,7 @@ analyze <- function(target,
   
   abc_summary_stat <- "median"
   doESTIMATION <- TRUE
-  plot_simCloud <- FALSE
+  #plot_simCloud <- FALSE
 
   # target conditions
   if (is.null(reftb$DIMREDUC)) stop("You have not performed the dimension reduction!")
@@ -190,21 +190,18 @@ analyze <- function(target,
 #' \item \code{deme.under.sel} the population which has been detected to have experienced a recent positive sweep 
 #' \item \code{BayesFactor} the Bayes factor in favour of the selective model for \code{deme.under.sel}
 #' \item \code{sweepAge} the posterior estimate of the sweep age
-#' \item \code{recRate} the posterior estimate of the recombination rate between adjacent bases
 #' \item \code{sweepAge.IC.low} the lower limit of the 95\% credible interval for the sweep age estimation
 #' \item \code{sweepAge.IC.up} the upper limit of the 95\% credible interval for the sweep age estimation
-#' \item \code{recRate.IC.low} the lower limit of the 95\% credible interval for the recombination rate estimation
-#' \item \code{recRate.IC.up} the upper limit of the 95\% credible interval for the recombination rate estimation
 #' \item \code{failure} if the sweep detection has failed, it can be (i) because of an insufficient minimum number of SNPs (\code{"minSNP"}); (ii) because the null hypothesis of the goodness-of-fit test was rejected (\code{"goodnessOfFit"}); (iii) because the ABC failed due to zero variance in a LDA/PLS component (\code{"ABC"}); (iv) because various models were not distinguishable based on their Bayes factor (i.e. case of equally likely models) (\code{"modelDiscrimination"}).
 #' }
 #' @seealso \code{\link{thin}}, \code{\link{get_SFS}}, \code{\link{generate_pseudoobs}}, \code{\link{abc}}, \code{\link{postpr}}
 #' @export
-gscan <- function(X, reftb, minSNP, startPos = NULL, lastPos = NULL, windowSlide = NULL, tolABC = .01, tolGFIT = .05, cutoff = 5, printProgress = T) {
+gscan <- function(X, reftb, minSNP, startPos = NULL, lastPos = NULL, windowSlide = NULL, tolABC = .01, tolGFIT = .05, cutoff = 5, printProgress = T, plot_simCloud = FALSE) {
   
   # preciser et corriger si windowSize observed != windowSize reftb
   
   # internally set options
-  plot_simCloud <- FALSE
+  #plot_simCloud <- FALSE
   
   if (class(X)=="validationTable") {
     
@@ -296,7 +293,7 @@ if (any(FAILURES)!=0) print(FAILURES)
 	  A <- analyze(oSFS, reftb, minSNP = minSNP, tolABC = tolABC, tolGFIT = tolGFIT, cutoff = cutoff, plot_simCloud = plot_simCloud, verbose = FALSE)
 
 
-      d <- NA; bf <- NA; est <- c(NA, NA); ic <- rep(NA, 4); fail <- NA; agevals <- NA
+      d <- NA; bf <- NA; est <- c(NA); ic <- rep(NA, 2); fail <- NA; agevals <- NA
       if (is.null(A)) stop("err!")
       if (!is.list(A) && A=="failedMINSNP") {
         d <- NA
@@ -332,9 +329,10 @@ if (any(FAILURES)!=0) print(FAILURES)
     }
     
     res <- as.data.frame(res, stringsAsFactors=F)
-    names(res) <- c("start.pos", "end.pos", "deme.under.sel", "BayesFactor", "sweepAge", "recRate",
-                    "sweepAge.IC.low", "sweepAge.IC.up", "recRate.IC.low", "recRate.IC.up", "failure")
-    for (j in c(1,2,4,5,6,7,8,9,10)) res[,j] <- as.numeric(res[,j])
+    #names(res) <- c("start.pos", "end.pos", "deme.under.sel", "BayesFactor", "sweepAge", "recRate",
+    #                "sweepAge.IC.low", "sweepAge.IC.up", "recRate.IC.low", "recRate.IC.up", "failure")
+	names(res) <- c("start.pos", "end.pos", "deme.under.sel", "BayesFactor", "sweepAge", "sweepAge.IC.low", "sweepAge.IC.up", "failure")
+    for (j in c(1,2,4,5,6,7)) res[,j] <- as.numeric(res[,j])
     
     return(list(res=res, adjVals=adjVals))
   }

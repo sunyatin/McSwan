@@ -6,7 +6,7 @@
 \usage{
 gscan(X, reftb, minSNP, startPos = NULL, lastPos = NULL,
   windowSlide = NULL, tolABC = 0.01, tolGFIT = 0.05, cutoff = 5,
-  printProgress = T)
+  printProgress = T, plot_simCloud = FALSE)
 }
 \arguments{
 \item{X}{either an object of class \code{observedDataset} produced by \code{\link{get_SFS}} or of class \code{validationTable} produced by \code{\link{generate_pseudoobs}}}
@@ -34,11 +34,8 @@ A list of two elements: \code{res} and \code{adjVals}. The \code{adjVals} elemen
 \item \code{deme.under.sel} the population which has been detected to have experienced a recent positive sweep 
 \item \code{BayesFactor} the Bayes factor in favour of the selective model for \code{deme.under.sel}
 \item \code{sweepAge} the posterior estimate of the sweep age
-\item \code{recRate} the posterior estimate of the recombination rate between adjacent bases
 \item \code{sweepAge.IC.low} the lower limit of the 95\% credible interval for the sweep age estimation
 \item \code{sweepAge.IC.up} the upper limit of the 95\% credible interval for the sweep age estimation
-\item \code{recRate.IC.low} the lower limit of the 95\% credible interval for the recombination rate estimation
-\item \code{recRate.IC.up} the upper limit of the 95\% credible interval for the recombination rate estimation
 \item \code{failure} if the sweep detection has failed, it can be (i) because of an insufficient minimum number of SNPs (\code{"minSNP"}); (ii) because the null hypothesis of the goodness-of-fit test was rejected (\code{"goodnessOfFit"}); (iii) because the ABC failed due to zero variance in a LDA/PLS component (\code{"ABC"}); (iv) because various models were not distinguishable based on their Bayes factor (i.e. case of equally likely models) (\code{"modelDiscrimination"}).
 }
 }

@@ -122,10 +122,10 @@ generate_priors <- function(msDemography,
     names(saDistrib) <- paste("i",seq_along(saDistrib),sep="")
     
     # recombination
-    r <- do.call(recRate[[1]], 
-                  c(nSimul, recRate[-1]))
+    #r <- do.call(recRate[[1]], c(nSimul, recRate[-1]))
 
-    priors[[isl]] <- data.frame(sweepAge=sa, recRate=r)
+    #priors[[isl]] <- data.frame(sweepAge=sa, recRate=r)
+	priors[[isl]] <- data.frame(sweepAge=sa)
     
   }
   
@@ -137,7 +137,7 @@ generate_priors <- function(msDemography,
                                windowSize = as.integer(windowSize),
                                islandSizes = islands,
                                sweepAgeDistrib = saDistrib,
-                               recRateDistrib = recRate,
+                               #recRateDistrib = recRate,
                                folded = fold),
                 PRIORS = priors,
                 SFS = NULL,

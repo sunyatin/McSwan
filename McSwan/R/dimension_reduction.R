@@ -54,7 +54,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
   euCols <- sds != 0
   cat(paste("\t - Removed",sum(!euCols),"columns with zero variance.\n"))
   if (PLS_normalize) {
-    cat("\t - Matrix Standardization.\n")
+    cat("\t - Matrix standardization.\n")
     ss <- t(apply(ss, 1, function(x) (x-means)/sds))
   }
   
@@ -192,9 +192,11 @@ dim_reduction <- function(x,
 						# REFTB PRE-PROCESSING
                           relativeSFS,
                           removeCollinearCols = TRUE,
+						  compress_SFS = TRUE,
 						#LDA
                           LDA_minVariance = 0,
 						  LDA_tol = 1e-9,
+						  LDA_fastDiag = TRUE,
 						#PLS
                           PLS_normalize = TRUE,
                           PLS_ncomp = NULL,
@@ -215,6 +217,10 @@ dim_reduction <- function(x,
   x$DIMREDUC$GENERAL <- list(relativeSFS = relativeSFS, 
                              removedCollinearColumns = removeCollinearCols,
                              PLS_normalize = PLS_normalize)
+
+  if ( class(x$SFS[[1]]) == "dgCMatrix" ) {
+    x$SFS <- lapply(x$SFS, as.matrix)
+  }
   
   # relativize multiSFS, if requested
   if (relativeSFS) {
@@ -290,8 +296,15 @@ dim_reduction <- function(x,
   
   # LDA
   cat('LDA computation.\n')
-  lda <- MASS::lda(x = lsfs[,euCols], grouping = modelIndices, tol = LDA_tol)
-  ldaScores <- predict(lda, lsfs[,euCols])$x
+  if (!LDA_fastDiag) {
+    cat("\t- Using MASS::lda algorithm.\n")
+    lda <- MASS::lda(x = lsfs[,euCols], grouping = modelIndices, tol = LDA_tol)
+    ldaScores <- predict(lda, lsfs[,euCols])$x
+  } else {
+    cat("\t- Using HiDimDA::Dlda algorithm based on a diagonal covariance matrix estimator.\n")
+    lda <- Dlda(data = lsfs[,euCols], grouping = as.factor(modelIndices))
+    ldaScores <- predict(lda, lsfs[,euCols])$Z
+  }
   if (F) {
   cat('PCA computation.\n')
   lda <- prcomp(lsfs[,euCols], retx=F, center=F, scale.=F, tol=.1)
@@ -300,7 +313,7 @@ dim_reduction <- function(x,
   }
   
   # compute null distrib of distances for each model
-  cat("Computation of per-model null distance distributions, for future goodness-of-fit tests.\n")
+  cat("\nComputation of per-model null distance distributions, for future goodness-of-fit tests.\n")
   
   dists <- by(ldaScores, modelIndices, function(x) get_dists(x, GOF_n, GOF_abcTol))  
   
@@ -340,6 +353,12 @@ dim_reduction <- function(x,
   x$DIMREDUC$PLS <- PLS
   rm("PLS"); invisible(gc(F))
   
+  if (compress_SFS) {
+    cat("The SFS slot was compressed into a sparseMatrix object. You can access it like a common matrix.\n")
+    x$SFS <- lapply(x$SFS, function(x) as(x, "sparseMatrix"))
+    invisible(gc(F))
+  }
+  
   return(x)
 }
 
@@ -366,8 +385,12 @@ project_target <- function(reftb, target, method, focalIsland = NULL) {
     euc <- reftb$DIMREDUC$LDA$euCols
     obs <- matrix(target[euc], nrow=1)
     colnames(obs) <- names(euc)[euc]
-    obs <- predict(reftb$DIMREDUC$LDA$model, obs)$x
-    
+    if (!LDA_fastDiag) {
+      obs <- predict(reftb$DIMREDUC$LDA$model, obs)$x
+    } else {
+      obs <- predict(reftb$DIMREDUC$LDA$model, obs)$Z
+    }
+
   } else if (method=="PLS") {
     
     if (is.null(focalIsland)) stop("We switching method to PLS, you must provide the index of the focal island.")

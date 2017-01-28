@@ -119,6 +119,7 @@ print.referenceTable <- function(X) {
 	if (is.null(X$SFS)) {
 		cat("EMPTY.\n")
 	} else {
+		cat("Format: ",ifelse(class(X$SFS[[1]])=="dgCMatrix", "sparseMatrix", "matrix"),"\n")
 		cat("Models: ",names(X$SFS),"\n")
 		cat("SFS properties:",ifelse(X$GENERAL$fold, "folded (= minor alleles frequencies)", "unfolded (= derived alleles frequencies)"), "and",ifelse(X$DIMREDUC$GENERAL$relativeSFS, "relative", "absolute"),"\n")
 		cat("Number of SFS bins: ",ncol(X$SFS[[1]]),"\n")
@@ -197,7 +198,7 @@ print.observedDataset <- function(X) {
     
     cat("Number of valid SNPs: ", nrow(X$obsData),"\n")
 	cat("Allele type (minor/derived): ",ifelse(X$folded,"minor","derived"),"\n")
-	cat("Expected number of bins in the multidimensional joint site frequency spectra: ",length(X$template))
+	cat("Expected number of bins in the multidimensional joint site frequency spectra: ",length(X$template),"\n")
     
 }
 
