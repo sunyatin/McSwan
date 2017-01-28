@@ -187,6 +187,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
 #' @return An object of class \code{referenceTable} with filled-in \code{DIMREDUC} slot.
 #' @seealso \code{\emph{coalesce}}, \code{\emph{plsr}}, \code{\emph{lda}}, \code{\emph{abc}}
 #' @examples Please refer to the vignette.
+#' @import Matrix
 #' @export
 dim_reduction <- function(x,
 						# REFTB PRE-PROCESSING
@@ -385,15 +386,15 @@ project_target <- function(reftb, target, method, focalIsland = NULL) {
     euc <- reftb$DIMREDUC$LDA$euCols
     obs <- matrix(target[euc], nrow=1)
     colnames(obs) <- names(euc)[euc]
-    if (class(reftb$SFS[[1]]) == "dgCMatrix") {
-      obs <- predict(reftb$DIMREDUC$LDA$model, obs)$Z
+    if (class(reftb$DIMREDUC$LDA$model) == "lda") {
+        obs <- predict(reftb$DIMREDUC$LDA$model, obs)$x
     } else {
-      obs <- predict(reftb$DIMREDUC$LDA$model, obs)$x
+        obs <- predict(reftb$DIMREDUC$LDA$model, obs)$Z
     }
 
   } else if (method=="PLS") {
     
-    if (is.null(focalIsland)) stop("We switching method to PLS, you must provide the index of the focal island.")
+    if (is.null(focalIsland)) stop("When switching method to PLS, you must provide the index of the focal island.")
     obs <- target
     if (reftb$DIMREDUC$GENERAL$PLS_normalize) {
       obs <- (target - reftb$DIMREDUC$PLS[[focalIsland]]$mean) / reftb$DIMREDUC$PLS[[focalIsland]]$sd

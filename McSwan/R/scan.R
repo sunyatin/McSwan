@@ -43,7 +43,7 @@ analyze <- function(target,
                     cutoff = 5,
                     plot_simCloud = FALSE,
                     verbose = F) {
-  
+
   abc_summary_stat <- "median"
   doESTIMATION <- TRUE
   #plot_simCloud <- FALSE
@@ -287,7 +287,7 @@ if (any(FAILURES)!=0) print(FAILURES)
       oSFS[names(tmp)] <- tmp
       tmp <- table(subset(localPAC, nSNP == .5)$PAC)
       oSFS[names(tmp)] <- oSFS[names(tmp)] + tmp / 2
-      oSFS <<- oSFS
+#oSFS <<- oSFS
       
       #A <- analyze(oSFS, reftb, minSNP = minSNP, ...)
 	  A <- analyze(oSFS, reftb, minSNP = minSNP, tolABC = tolABC, tolGFIT = tolGFIT, cutoff = cutoff, plot_simCloud = plot_simCloud, verbose = FALSE)
