@@ -302,7 +302,7 @@ dim_reduction <- function(x,
     ldaScores <- predict(lda, lsfs[,euCols])$x
   } else {
     cat("\t- Using HiDimDA::Dlda algorithm based on a diagonal covariance matrix estimator.\n")
-    lda <- Dlda(data = lsfs[,euCols], grouping = as.factor(modelIndices))
+    lda <- HiDimDA::Dlda(data = lsfs[,euCols], grouping = as.factor(modelIndices))
     ldaScores <- predict(lda, lsfs[,euCols])$Z
   }
   if (F) {
@@ -355,7 +355,7 @@ dim_reduction <- function(x,
   
   if (compress_SFS) {
     cat("The SFS slot was compressed into a sparseMatrix object. You can access it like a common matrix.\n")
-    x$SFS <- lapply(x$SFS, function(x) as(x, "sparseMatrix"))
+    x$SFS <- lapply(x$SFS, function(x) Matrix::Matrix(x, sparse = TRUE))
     invisible(gc(F))
   }
   
