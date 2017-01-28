@@ -4,7 +4,7 @@
 \alias{print.referenceTable}
 \title{Print a summary of a \code{referenceTable} object content}
 \usage{
-\method{print}{referenceTable}(X)
+print.referenceTable(X)
 }
 \arguments{
 \item{X}{a \code{referenceTable} object}

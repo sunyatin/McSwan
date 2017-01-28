@@ -4,7 +4,7 @@
 \alias{print.validationTable}
 \title{Print a summary of a \code{validationTable} object content}
 \usage{
-\method{print}{validationTable}(X)
+print.validationTable(X)
 }
 \arguments{
 \item{X}{a \code{validationTable} object}

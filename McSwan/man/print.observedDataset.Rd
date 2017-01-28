@@ -4,7 +4,7 @@
 \alias{print.observedDataset}
 \title{Print a summary of a \code{observedDataset} object content}
 \usage{
-\method{print}{observedDataset}(X)
+print.observedDataset(X)
 }
 \arguments{
 \item{X}{a \code{observedDataset} object}

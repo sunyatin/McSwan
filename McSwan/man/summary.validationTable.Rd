@@ -4,7 +4,7 @@
 \alias{summary.validationTable}
 \title{Summary of the sliding validation}
 \usage{
-\method{summary}{validationTable}(X, file)
+summary.validationTable(X, file)
 }
 \arguments{
 \item{X}{a \code{validationTable} object with non-empty \code{ANALYSIS} slot (ie. obtained after executing the \code{sliding_validation} function)}
