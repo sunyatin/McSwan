@@ -133,9 +133,9 @@ print.referenceTable <- function(X) {
 		cat(paste("\t Removed collinear cells:",X$DIMREDUC$GENERAL$removedCollinearColumns,"\n"))
 		cat(paste("\t Standardized for PLS:",X$DIMREDUC$GENERAL$PLS_normalize,"\n"))
 		cat("\n")
-		cat(paste("\t LDA:\n"))
+		cat("\t_LDA_\t",ifelse(class(X$DIMREDUC$LDA$model)=="lda","MASS::lda","HiDimDA::Dlda"),"\n")
 		cat(paste("\t\t |__ Number of retained components:",ncol(X$DIMREDUC$LDA$scores),"\n"))
-		cat(paste("\t PLS:\n"))
+		cat("\t_PLS_\t","pls::plsr","\n")
 		cat(paste("\t\t |__ Number of retained components:",paste(simplify2array(lapply(X$DIMREDUC$PLS, function(x) ncol(x$scores))), collapse=" & "),"\n"))
     }
 	cat("\n")

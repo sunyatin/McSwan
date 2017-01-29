@@ -4,11 +4,25 @@
 #' @param sfs a list of model-specific multiSFS matrices
 #' @return A list of two elements: a vector of model indices; a big matrix containing all merged multiSFSs.
 #' @keywords internal
-linearize <- function(sfs) {
+linearize <- function(sfs, LDA_sizePerModel = 10000) {
   model_indices <- gsfs <- c()
-  for (i in seq_along(sfs)) {
-    model_indices <- c(model_indices, rep(names(sfs)[i], nrow(sfs[[i]])))
-    gsfs <- rbind(gsfs, sfs[[i]])
+  if (is.null(LDA_sizePerModel)) {
+	for (i in seq_along(sfs)) {
+		model_indices <- c(model_indices, rep(names(sfs)[i], nrow(sfs[[i]])))
+		gsfs <- rbind(gsfs, sfs[[i]])
+	}
+  } else {
+	for (i in seq_along(sfs)) {
+		nr <- nrow(sfs[[i]])
+		if (nr < LDA_sizePerModel) stop("LDA_sizePerModel is greater than the number of simulations in your model(s)")
+		if (nr == LDA_sizePerModel) {
+			model_indices <- c(model_indices, rep(names(sfs)[i], nrow(sfs[[i]])))
+			gsfs <- rbind(gsfs, sfs[[i]])
+		} else {
+			model_indices <- c(model_indices, rep(names(sfs)[i], LDA_sizePerModel))
+			gsfs <- rbind(gsfs, sfs[[i]][sample(1:nrow(sfs[[i]]), LDA_sizePerModel, replace=FALSE)])
+		}
+	}
   }
   return(list(model_indices=model_indices, sfs=gsfs))
 }
@@ -198,6 +212,7 @@ dim_reduction <- function(x,
                           LDA_minVariance = 0,
 						  LDA_tol = 1e-9,
 						  LDA_fastDiag = TRUE,
+						  LDA_sizePerModel = 10000,
 						#PLS
                           PLS_normalize = TRUE,
                           PLS_ncomp = NULL,
@@ -244,7 +259,7 @@ dim_reduction <- function(x,
   ###########
   
   cat("\n\n>>> LDA\n\nMatrix preparation.\n")
-  lsfs <- linearize(sfs); modelIndices <- lsfs$model_indices; lsfs <- lsfs$sfs
+  lsfs <- linearize(sfs, LDA_sizePerModel = LDA_sizePerModel); modelIndices <- lsfs$model_indices; lsfs <- lsfs$sfs
   invisible(gc(F))
   
   if (QR_multicollinearity) {
