@@ -20,7 +20,7 @@ linearize <- function(sfs, LDA_sizePerModel = 10000) {
 			gsfs <- rbind(gsfs, sfs[[i]])
 		} else {
 			model_indices <- c(model_indices, rep(names(sfs)[i], LDA_sizePerModel))
-			gsfs <- rbind(gsfs, sfs[[i]][sample(1:nrow(sfs[[i]]), LDA_sizePerModel, replace=FALSE)])
+			gsfs <- rbind(gsfs, sfs[[i]][sample(1:nrow(sfs[[i]]), LDA_sizePerModel, replace=FALSE),])
 		}
 	}
   }
