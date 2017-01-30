@@ -121,9 +121,9 @@ analyze <- function(target,
   }
   
   imp <- impute(pp, cutoff)
-  if (!is.list(imp) && imp=="failedDISCRIMINABILITY") return("failedDISCRIMINABILITY")
+  if (!is.list(imp) && imp=="failedDISCRIMINABILITY") return(list("failedDISCRIMINABILITY", paste(pp, collapse=" ")))
   sweepIsl <- imp[[1]]
-  if (sweepIsl=="i0") return("i0")
+  if (sweepIsl=="i0") return(list(sweepingIsl = "i0", pp = paste(pp, collapse=" ")))
   
   if (doESTIMATION) {
   
@@ -165,10 +165,10 @@ analyze <- function(target,
       IC <- c(ic)
       names(IC) <- paste(rep(colnames(aa$adj.values), each=2), rep(c("low","up"), ncol(aa$adj.values)), sep=".")
       
-      return(c(imp, params=prm, ic=list(IC), ageAdjValues=adjvals))
+      return(c(imp, params=prm, ic=list(IC), ageAdjValues=adjvals, pp = paste(pp, collapse=" ")))
     }
   } else {
-    return(c(imp, params=list(c(NA,NA)), ic=list(c(NA,NA,NA,NA)), ageAdjValues=list(c(NA))))
+    return(c(imp, params=list(c(NA,NA)), ic=list(c(NA,NA,NA,NA)), ageAdjValues=list(c(NA)), pp = paste(pp, collapse=" ")))
   }
 }
 
@@ -217,6 +217,7 @@ gscan <- function(X, reftb, minSNP, startPos = NULL, lastPos = NULL, windowSlide
     names(ES_PRIORS) <- names(TR_PRIORS)
     rownames(ES_PRIORS) <- rownames(TR_PRIORS)
     ES_PRIORS$BayesFactor <- NA
+	ES_PRIORS$postpr <- NA
     
     FAILURES <- as.data.frame(matrix(FALSE, ncol=4, nrow=nrow(TR_PRIORS)))
     rownames(FAILURES) <- rownames(TR_PRIORS)
@@ -226,7 +227,7 @@ gscan <- function(X, reftb, minSNP, startPos = NULL, lastPos = NULL, windowSlide
       cat(i, ".")
 
       A <- analyze(TR_SFS[i,], reftb, minSNP = minSNP, tolABC = tolABC, tolGFIT = tolGFIT, cutoff = cutoff, plot_simCloud = plot_simCloud, verbose = FALSE)
-     
+
       if (is.null(A)) stop("err!")
       if (!is.list(A) && A=="failedMINSNP") {
         FAILURES[i,"failedMINSNP"] <- TRUE
@@ -234,15 +235,18 @@ gscan <- function(X, reftb, minSNP, startPos = NULL, lastPos = NULL, windowSlide
         FAILURES[i,"failedGFIT"] <- TRUE
       } else if (!is.list(A) && A=="failedABC") {
         FAILURES[i,"failedABC"] <- TRUE
-      } else if (!is.list(A) && A=="failedDISCRIMINABILITY") {
+      } else if (is.list(A) && A[[1]]=="failedDISCRIMINABILITY") {
         FAILURES[i,"failedDISCRIMINABILITY"] <- TRUE
+		ES_PRIORS[i,"postpr"] <- A[[2]]
       } else {
-        if (!is.list(A) && A=="i0") {
+        if (is.list(A) && A[[1]]=="i0") {
           ES_PRIORS[i,"sweepingIsland"] <- "i0"
+		  ES_PRIORS[i,"postpr"] <- A$pp
         } else {
           ES_PRIORS[i,"sweepingIsland"] <- A$sweepingIsl
           ES_PRIORS[i,"BayesFactor"] <- A$BayesFactor
           ES_PRIORS[i,names(A$params)] <- A$params
+		  ES_PRIORS[i,"postpr"] <- A$pp
         }
       }
       
@@ -292,8 +296,7 @@ if (any(FAILURES)!=0) print(FAILURES)
       #A <- analyze(oSFS, reftb, minSNP = minSNP, ...)
 	  A <- analyze(oSFS, reftb, minSNP = minSNP, tolABC = tolABC, tolGFIT = tolGFIT, cutoff = cutoff, plot_simCloud = plot_simCloud, verbose = FALSE)
 
-
-      d <- NA; bf <- NA; est <- c(NA); ic <- rep(NA, 2); fail <- NA; agevals <- NA
+      d <- NA; bf <- NA; est <- c(NA); ic <- rep(NA, 2); fail <- NA; agevals <- NA; pp <- NA
       if (is.null(A)) stop("err!")
       if (!is.list(A) && A=="failedMINSNP") {
         d <- NA
@@ -304,22 +307,25 @@ if (any(FAILURES)!=0) print(FAILURES)
       } else if (!is.list(A) && A=="failedABC") {
         d <- NA
         fail <- "ABC"
-      } else if (!is.list(A) && A=="failedDISCRIMINABILITY") {
+      } else if (is.list(A) && A[[1]]=="failedDISCRIMINABILITY") {
         d <- NA
         fail <- "modelDiscrimination"
+		pp <- A$pp
       } else {
-        if (!is.list(A) && A=="i0") {
+        if (is.list(A) && A[[1]]=="i0") {
           d <- "i0"
+		  pp <- A$pp
         } else {
           d <- A$sweepingIsl
           bf <- A$BayesFactor
           est <- A$params
           ic <- A$ic
           agevals <- A$ageAdjValues
+		  pp <- A$pp
         }
       }
-      
-      res <- rbind(res, c(startPos, endPos, d, bf, est, ic, fail))
+
+      res <- rbind(res, c(startPos, endPos, d, bf, est, ic, fail, pp))
       adjVals <- c(adjVals, list(agevals))
       
       # move window
@@ -331,7 +337,7 @@ if (any(FAILURES)!=0) print(FAILURES)
     res <- as.data.frame(res, stringsAsFactors=F)
     #names(res) <- c("start.pos", "end.pos", "deme.under.sel", "BayesFactor", "sweepAge", "recRate",
     #                "sweepAge.IC.low", "sweepAge.IC.up", "recRate.IC.low", "recRate.IC.up", "failure")
-	names(res) <- c("start.pos", "end.pos", "deme.under.sel", "BayesFactor", "sweepAge", "sweepAge.IC.low", "sweepAge.IC.up", "failure")
+	names(res) <- c("start.pos", "end.pos", "deme.under.sel", "BayesFactor", "sweepAge", "sweepAge.IC.low", "sweepAge.IC.up", "failure", "postpr")
     for (j in c(1,2,4,5,6,7)) res[,j] <- as.numeric(res[,j])
     
     return(list(res=res, adjVals=adjVals))

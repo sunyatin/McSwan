@@ -69,7 +69,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
   cat(paste("\t - Removed",sum(!euCols),"columns with zero variance.\n"))
   if (PLS_normalize) {
     cat("\t - Matrix standardization.\n")
-    ss <- t(apply(ss, 1, function(x) (x-means)/sds))
+    ss <- t(apply(ss, 1, function(z) (z-means)/sds))
   }
   
   if (QR_multicollinearity) {
@@ -122,7 +122,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
       # line1 is the line crossing the L-shaped curve
       slope <- (min(r) - r[1])/(which.min(r) - 1)
       intercept <- r[1] - slope*1
-      lin <- function(x) slope * x + intercept
+      lin <- function(z) slope * z + intercept
       
       # find slope & intercept of line2, orthogonal to line1 (itself defined by its slope and intercept),
       # and passing through a given point (defined by xcross and ycross)
@@ -210,6 +210,7 @@ dim_reduction <- function(x,
 						  compress_SFS = TRUE,
 						#LDA
                           LDA_minVariance = 0,
+						  LDA_minVarPerModel = FALSE,
 						  LDA_tol = 1e-9,
 						  LDA_fastDiag = TRUE,
 						  LDA_sizePerModel = 10000,
@@ -264,10 +265,18 @@ dim_reduction <- function(x,
   
   if (QR_multicollinearity) {
     
-    # remove 0-varianced columns
-    sds <- apply(lsfs, 2, function(x) sqrt(var(x, na.rm=T)))
-    euCols <- sds > LDA_minVariance
-    cat(paste("\t- Removed",sum(!euCols),"columns with zero variance.\n"))
+	if (LDA_minVarPerModel==FALSE) {
+		# remove 0-varianced columns
+		sds <- apply(lsfs, 2, function(z) sqrt(var(z, na.rm=T)))
+		euCols <- sds > LDA_minVariance
+		cat(paste("\t- Removed",sum(!euCols),"columns with too low variance __across__ all models.\n"))
+		cat(paste("\t- Kept",sum(euCols),"columns.\n"))
+	} else {
+		sds <- simplify2array(by(lsfs, modelIndices, function(z) apply(z, 2, function(zz) sqrt(var(zz)) > LDA_minVariance)))
+		euCols <- apply(sds, 1, function(z) all(z==TRUE))
+		cat(paste("\t- Removed",sum(!euCols),"columns with too low variance __in at least__ one model.\n"))
+		cat(paste("\t- Kept",sum(euCols),"columns.\n"))
+	}
     
     # perform QR decomposition
     colnames <- names(euCols)[euCols]
@@ -279,7 +288,8 @@ dim_reduction <- function(x,
     euCols[!names(euCols)%in%euQRcols] <- FALSE
     
   } else {
-  
+	warning("LDA_minVarPerModel not taken into acount when QR_multicollinearity=FALSE")
+	
     # detect zero-varianced columns
     sds <- apply(lsfs, 2, sd, na.rm=T)
     euCols <- sds > LDA_minVariance
@@ -291,7 +301,7 @@ dim_reduction <- function(x,
     md <- unique(modelIndices)
     for (i in seq_along(md)) {
       print(i)
-      TMP <- TMP * apply(lsfs[modelIndices==md[i],], 2, function(x) sd(x, na.rm=T) > LDA_minVariance)
+      TMP <- TMP * apply(lsfs[modelIndices==md[i],], 2, function(z) sd(z, na.rm=T) > LDA_minVariance)
     }
     euCols <- as.logical(euCols * TMP)
     print(table(euCols))
@@ -331,7 +341,7 @@ dim_reduction <- function(x,
   # compute null distrib of distances for each model
   cat("\nComputation of per-model null distance distributions, for future goodness-of-fit tests.\n")
   
-  dists <- by(ldaScores, modelIndices, function(x) get_dists(x, GOF_n, GOF_abcTol))  
+  dists <- by(ldaScores, modelIndices, function(z) get_dists(z, GOF_n, GOF_abcTol))  
   
   # store results
   x$DIMREDUC$LDA <- list("model" = lda, 
@@ -371,7 +381,7 @@ dim_reduction <- function(x,
   
   if (compress_SFS) {
     cat("The SFS slot was compressed into a sparseMatrix object. You can access it like a common matrix.\n")
-    x$SFS <- lapply(x$SFS, function(x) Matrix::Matrix(x, sparse = TRUE))
+    x$SFS <- lapply(x$SFS, function(z) Matrix::Matrix(z, sparse = TRUE))
     invisible(gc(F))
   }
   

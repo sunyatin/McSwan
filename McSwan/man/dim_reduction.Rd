@@ -5,10 +5,10 @@
 \title{Dimension reduction prior to approximate Bayesian computation}
 \usage{
 dim_reduction(x, relativeSFS, removeCollinearCols = TRUE,
-  compress_SFS = TRUE, LDA_minVariance = 0, LDA_tol = 1e-09,
-  LDA_fastDiag = TRUE, PLS_normalize = TRUE, PLS_ncomp = NULL,
-  PLS_maxncomp = 100, PLS_plotCV = FALSE, GOF_n = 2000,
-  GOF_abcTol = 0.01)
+  compress_SFS = TRUE, LDA_minVariance = 0, LDA_minVarPerModel = FALSE,
+  LDA_tol = 1e-09, LDA_fastDiag = TRUE, LDA_sizePerModel = 10000,
+  PLS_normalize = TRUE, PLS_ncomp = NULL, PLS_maxncomp = 100,
+  PLS_plotCV = FALSE, GOF_n = 2000, GOF_abcTol = 0.01)
 }
 \arguments{
 \item{x}{a \code{referenceTable} object with non-empty \code{PRIORS} and \code{SFS} slots}
