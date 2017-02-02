@@ -15,10 +15,10 @@ Imports:
 	ggplot2 (>= 2.1.0),
 	abc (>= 2.1),
 	pls (>= 2.5-0),
-	Matrix (>= 1.2-7.1),
+	Matrix (>= 1.2),
 	reshape2 (>= 1.4.1),
 	roxygen2 (>= 5.0.1),
-	RColorBrewer (>= 1.1-2)
+	RColorBrewer (>= 1.1)
 LinkingTo: Rcpp
 LazyData: TRUE
 RoxygenNote: 5.0.1
