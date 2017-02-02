@@ -10,7 +10,7 @@ License: GPL (>= 2)
 Imports:
 	Rcpp (>= 0.12.5),
 	phyclust (>= 0.1-16),
-	MASS (>= 7.3-45),
+	MASS (>= 7.3),
 	caret (>= 6.0-70),
 	ggplot2 (>= 2.1.0),
 	abc (>= 2.1),
