@@ -77,7 +77,7 @@ thin <- function(x, reftb, bwadjust = 1, minWindows = 1, summary_stat = "mean", 
 #' @keywords internal
 thin_internal <- function(x, reftb, method = "contig", stat = "mean", bwadjust = 1, minWindows = 1, plot_thinning = F, epsilon = 1e-15, summary_stat = "mean") {
   ## output==list(density=NULL, estimation=NULL) means ' all is "i0" ' (by Ho-conservatism)
-  
+
   AVALL <- x$adjVals
   x <- x$res
   

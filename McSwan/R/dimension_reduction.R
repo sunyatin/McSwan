@@ -206,11 +206,13 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, pl
 dim_reduction <- function(x,
 						# REFTB PRE-PROCESSING
                           relativeSFS,
+						  genetic_sumstats = TRUE,
                           removeCollinearCols = TRUE,
 						  compress_SFS = TRUE,
 						#LDA
                           LDA_minVariance = 0,
 						  LDA_minVarPerModel = FALSE,
+						  LDA_NonNullP = .05,
 						  LDA_tol = 1e-9,
 						  LDA_fastDiag = TRUE,
 						  LDA_sizePerModel = 10000,
@@ -276,6 +278,12 @@ dim_reduction <- function(x,
 		euCols <- apply(sds, 1, function(z) all(z==TRUE))
 		cat(paste("\t- Removed",sum(!euCols),"columns with too low variance __in at least__ one model.\n"))
 		cat(paste("\t- Kept",sum(euCols),"columns.\n"))
+	}
+	
+	if (!is.null(LDA_NonNullP)) {
+		nnp <- apply(lsfs, 2, function(x) sum(x!=0)/length(x) >= LDA_NonNullP)
+		euCols = as.logical(euCols * nnp)
+		cat(paste0("\t- Found ",sum(!nnp)," columns having less than ",LDA_NonNullP,"% non-null values.\n"))
 	}
     
     # perform QR decomposition
@@ -385,6 +393,21 @@ dim_reduction <- function(x,
     invisible(gc(F))
   }
   
+  if (genetic_sumstats) {
+	cat("Additional genetic summary statistics to be computed.\n")
+    x$DIMREDUC$genetic_sumstats <- TRUE
+	TAJ <- tajima(sfs$i0, internal = TRUE)
+	for (i in seq_along(x$DIMREDUC$PLS)) {
+		nama <- names(x$DIMREDUC$PLS)[i]
+		taj <- tajima(sfs[[nama]], internal = TRUE, do_H = !x$GENERAL$folded)
+		x$DIMREDUC$PLS[[i]]$scores <- cbind(x$DIMREDUC$PLS[[i]]$scores, taj)
+		TAJ <- rbind(TAJ, taj)
+	}
+	x$DIMREDUC$LDA$scores <- cbind(x$DIMREDUC$LDA$scores, TAJ)
+  } else {
+    x$DIMREDUC$genetic_sumstats <- FALSE
+  }
+  
   return(x)
 }
 
@@ -435,6 +458,7 @@ project_target <- function(reftb, target, method, focalIsland = NULL) {
     
   }
 
+  if (reftb$DIMREDUC$genetic_sumstats==TRUE) obs <- cbind(obs, tajima(target, internal = TRUE, do_H = !x$GENERAL$folded))
   return(obs)
 }
 

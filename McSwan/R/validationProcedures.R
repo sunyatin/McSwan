@@ -41,6 +41,7 @@ sliding_validation <- function(valtb,
                                   windowSlide = windowSlide,
                                   tolGFIT = tolGFIT,
                                   printProgress = F))
+print(O$res)
       O <- thin(O, reftb, ...) #####!!!!!! 06102016
       #OO$density <- rbind(OO$density, O$density)
       #OO$estimation <- rbind(OO$estimation, O$estimation)
@@ -197,7 +198,7 @@ summary.validationTable <- function(X, file) {
       
       #if (is.null(Y[[i]][[j]]$density)) next()
       #if (all(is.na(Y[[i]][[j]]$estimation))) next()
-      if (is.null(Y[[i]][[j]]$estimation)||nrow(Y[[i]][[j]]$estimation)==0) {
+      if (is.null(Y[[i]][[j]])||nrow(Y[[i]][[j]])==0) {
         add <- data.frame("true.model" = deme,
                           "simID" = names(Y[[deme]])[j],
                           "est.model" = "i0",
@@ -213,14 +214,14 @@ summary.validationTable <- function(X, file) {
       } else {
         add <- data.frame("true.model" = deme,
                         "simID" = names(Y[[deme]])[j],
-                        "est.model" = as.character(Y[[deme]][[j]]$estimation$deme),
-                        "est.sweepAge" = Y[[deme]][[j]]$estimation$sweepAge,
-                        "est.sweepAge.IClow" = Y[[deme]][[j]]$estimation$sweepAge.IC.low,
-                        "est.sweepAge.ICup" = Y[[deme]][[j]]$estimation$sweepAge.IC.up,
-                        "est.sweepPos" = Y[[deme]][[j]]$estimation$sweep.center,
+                        "est.model" = as.character(Y[[deme]][[j]]$deme),
+                        "est.sweepAge" = Y[[deme]][[j]]$sweepAge,
+                        "est.sweepAge.IClow" = Y[[deme]][[j]]$sweepAge.IC.low,
+                        "est.sweepAge.ICup" = Y[[deme]][[j]]$sweepAge.IC.up,
+                        "est.sweepPos" = Y[[deme]][[j]]$sweep.center,
                         "true.sweepPos" = X$GENERAL$sweepPos,
-                        "est.sweepStart" = Y[[deme]][[j]]$estimation$sweep.lbound,
-                        "est.sweepEnd" = Y[[deme]][[j]]$estimation$sweep.rbound,
+                        "est.sweepStart" = Y[[deme]][[j]]$sweep.lbound,
+                        "est.sweepEnd" = Y[[deme]][[j]]$sweep.rbound,
                         "true.sweepAge" = ifelse(deme=="i0", NA, X$PRIORS[[deme]]$sweepAge[j]),
                         "true.recRate" = ifelse(deme=="i0", NA, X$PRIORS[[deme]]$recRate[j]), stringsAsFactors=F)
       }
@@ -363,7 +364,7 @@ summary.validationTable <- function(X, file) {
 	  
 	  # NRMSE
 		prmD <- R$param.estimation
-		R$NRMSE <- as.matrix(by(prmD, prmD$true.model, function(x) McSwan::NRMSE(x$true.sweepAge, x$est.sweepAge)))
+		R$NRMSE <- as.matrix(by(prmD, prmD$true.model, function(x) NRMSE(x$true.sweepAge, x$est.sweepAge)))
 
   } else {
 	R$NRMSE <- NA
