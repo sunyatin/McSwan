@@ -18,18 +18,25 @@
 #' }
 #' @seealso \code{\link{gscan}} for iterating this function by sliding windows along the genome
 #' @export
-gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowSizes = seq(1e4, 2e5, length.out = 20), nSteps = 20, n = NULL) {
+gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowSizes = seq(1e4, 2e5, length.out = 20), nSteps = 20, n = NULL, discard.extrarange = TRUE) {
 	if (class(reftb)!="referenceTable") stop("reftb is not a valid referenceTable")
 	if (is.null(reftb$DIMREDUC)) stop("You have not performed the dimension reduction.")
+	if (minSNP < 1) stop("minSNP must be >= 1")
 	
 	infer.age = TRUE
 
 	# by class
 	if (class(X)=="observedDataset") { cat("Scanning an observedDataset object.\n")
 		if (reftb$GENERAL$folded != X$folded) stop("Error: folding is not homogeneous across X and reftb.\n")
-		Y = scan_core(reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, firstPos = firstPos, lastPos = lastPos, minSNP = minSNP, windowSizes = windowSizes, nSteps = nSteps, infer.age = infer.age)
+		if (!all.equal(colnames(reftb$SFS[[1]]), names(X$template))) stop("SFS bins are not the same between X and reftb")
+
+		# go
+		Y = scan_core(reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, firstPos = firstPos, lastPos = lastPos, minSNP = minSNP, windowSizes = windowSizes, nSteps = nSteps, infer.age = infer.age, discard.extrarange = discard.extrarange)
 	} else if (class(X)=="validationTable") { cat("Scanning a validationTable object.\n")
 		if (reftb$GENERAL$folded != X$GENERAL$folded) stop("Error: folding is not homogeneous across X and reftb.\n")
+		if (!all.equal(colnames(reftb$SFS[[1]]), names(X$SFS[[1]][[1]]$template))) stop("SFS bins are not the same between X and reftb")
+
+		# go
 		Y <- lapply(X$SFS, function(x) NA)
 		for (d in seq_along(X$SFS)) {
 			deme <- names(X$SFS)[d]
@@ -37,7 +44,7 @@ gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowS
 			cat("\n\n==========================\n",deme,"\n==========================\n")
 			ad = list()
 			for (i in 1:n) { cat("\n\n>>> ",deme," ",i,"\n")
-				ad = c(ad, list(scan_core(reftb, POS = X$SFS[[deme]][[i]]$obsData$POS, PAC = X$SFS[[deme]][[i]]$obsData$PAC, wSNP = X$SFS[[deme]][[i]]$obsData$nSNP, firstPos = NULL, lastPos = NULL, minSNP = minSNP, windowSizes = windowSizes, nSteps = nSteps, infer.age = infer.age)))
+				ad = c(ad, list(scan_core(reftb, POS = X$SFS[[deme]][[i]]$obsData$POS, PAC = X$SFS[[deme]][[i]]$obsData$PAC, wSNP = X$SFS[[deme]][[i]]$obsData$nSNP, firstPos = NULL, lastPos = NULL, minSNP = minSNP, windowSizes = windowSizes, nSteps = nSteps, infer.age = infer.age, discard.extrarange = discard.extrarange)))
 			}
 			names(ad) = 1:n
 			Y[[deme]] = ad
@@ -51,9 +58,12 @@ gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowS
 
 #' @title Core function for the genome scan
 #' @keywords internal
-scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSizes, nSteps, infer.age = TRUE, progressBar = TRUE) {
+scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSizes, nSteps, infer.age = TRUE, disc = TRUE, progressBar = TRUE) {
 	if (class(reftb)!="referenceTable") stop("reftb is not a valid referenceTable")
+	if (discard.extrarange) cat("Out-of-range parameter estimates will be discarded.\n")
  
+	cat("\n")
+	
 	# if requested, contract the scan range
 	if (!is.null(firstPos)) {
 		inRange = POS >= firstPos
@@ -78,14 +88,15 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
         colnames(EST.AGE) <- names(reftb$DIMREDUC$PLS)
     }
     WEIGHTS = STABILITY
+	if (discard.extrarange == TRUE) PARAM.WEIGHTS = WEIGHTS[,-1]
 	N.TESTS = rep(0, length(POS))
 	isFolded = (reftb$GENERAL$folded)
 
-	# force the levels of PAC to the full range of the sfs, in the same order as the reftb sfs
+	# force the levels of PAC to the full range of the sfs, in the same order as the reftb sfs bins
 	PAC <- factor(as.character(PAC), levels = colnames(reftb$SFS[[1]]))
 	n = 0
 	if (is.null(windowSizes)) windowSizes = maxPos - minPos + 100
-	if (progressBar) { nBarElmts <- 50; nMax <- length(windowSizes) * nSteps; nLast <- 1; bar <- rep(" ", nBarElmts) }
+	if (progressBar) { nBarElmts <- 100; nMax <- length(windowSizes) * nSteps; nLast <- 1; bar <- rep(" ", nBarElmts) }
 
     for (i in seq_along(windowSizes)) { if (!progressBar) cat("\n",i," ")
         starts = seq(minPos, minPos + windowSizes[i] - 1, length.out = nSteps)
@@ -104,7 +115,7 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
 				local.sfs <- do.call("rbind", by(PAC, WIN, table))
 			}
 			nSNP = rowSums(local.sfs)
-			local.sfs = sweep(local.sfs, MARGIN = 1, FUN = "/", STATS = nSNP)
+			local.sfs = sweep(local.sfs, MARGIN = 1, FUN = "/", STATS = replace(nSNP, nSNP==0, 1)) # replace() to avoid dividing by 0
 
             # LDA prediction
             if ("PCA.model" %in% names(reftb$DIMREDUC$LDA)) {
@@ -125,9 +136,9 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
 			if (infer.age && !progressBar) cat("!")
             for (l in 1:length(lvl)) {
 				focus = (classes == lvl[l]) & inferrableSNP
-				STABILITY[focus, l] = STABILITY[focus, l] + 1
-				tmp = LDA$posterior[WIN, l]
-                WEIGHTS[inferrableSNP, l] = WEIGHTS[inferrableSNP, l] + tmp[inferrableSNP]
+				STABILITY[focus, lvl[l]] = STABILITY[focus, lvl[l]] + 1
+				wgts = LDA$posterior[WIN, lvl[l]]
+                WEIGHTS[inferrableSNP, lvl[l]] = WEIGHTS[inferrableSNP, lvl[l]] + wgts[inferrableSNP]
 				# estimate
 				if (infer.age && lvl[l] != "i0") { 
 					focal.sfs = local.sfs
@@ -135,24 +146,48 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
                     focal.sfs = focal.sfs[,reftb$DIMREDUC$PLS[[lvl[l]]]$euCols,drop=F]
                     pls = c(predict(reftb$DIMREDUC$PLS[[lvl[l]]]$model, focal.sfs, type="response", comps=1:reftb$DIMREDUC$PLS[[lvl[l]]]$model$ncomp))
 					w = LDA$posterior[, lvl[l]]
-                    pls = pls * w
-                    pls = pls[WIN]
-                    EST.AGE[inferrableSNP, lvl[l]] = EST.AGE[inferrableSNP, lvl[l]] + pls[inferrableSNP]
+					if (discard.extrarange == TRUE) {
+						Range = unlist(reftb$GENERAL$sweepAgeDistrib[[lvl[l]]][2:3])
+						est_is_ok = (pls >= Range[1]) & (pls <= Range[2])
+						pls[!est_is_ok] = NA
+						pls = pls * w
+						pls = pls[WIN]
+						est_is_ok = est_is_ok[WIN]
+						# append
+						PARAM.WEIGHTS[inferrableSNP&est_is_ok, lvl[l]] = PARAM.WEIGHTS[inferrableSNP&est_is_ok, lvl[l]] + wgts[inferrableSNP&est_is_ok]
+						EST.AGE[inferrableSNP&est_is_ok, lvl[l]] = EST.AGE[inferrableSNP&est_is_ok, lvl[l]] + pls[inferrableSNP&est_is_ok]
+					} else {
+						pls = pls * w
+						pls = pls[WIN]
+						# append
+						EST.AGE[inferrableSNP, lvl[l]] = EST.AGE[inferrableSNP, lvl[l]] + pls[inferrableSNP]
+					}
+                    
 				}
             }
 
 			if (progressBar) {
-				if (floor(n/nMax*length(bar)) >= nLast) {
+				if (floor(n/nMax*length(bar)) > nLast) {
 					nLast <- floor(n/nMax*length(bar))
-					bar[1:nLast] <- "="
-					if (n/nMax!=1) bar[nLast+1] <- ">"
-					cat("[",paste0(bar, collapse=""),"]","\n", sep="")
+					if (FALSE) { # bar
+						bar[1:nLast] <- "="
+						if (n/nMax!=1) bar[nLast+1] <- ">"
+						cat("[",paste0(bar, collapse=""),"]","\n", sep="")
+					} else { # only print %
+						cat(floor(n/nMax*100),"%"," ",sep="")
+					}
 				}
 			}
         } #s
     } #i
 
-    if (infer.age) EST.AGE = EST.AGE / WEIGHTS[,-1] # must be done before averaging the WEIGHTS
+    if (infer.age) {
+		if (discard.extrarange) {
+			EST.AGE = EST.AGE / PARAM.WEIGHTS
+		} else {
+			EST.AGE = EST.AGE / WEIGHTS[,-1] # must be done before averaging the WEIGHTS
+		}
+	}
     STABILITY = sweep(STABILITY, MARGIN = 1, FUN = "/", STATS = N.TESTS)
     WEIGHTS = sweep(WEIGHTS, MARGIN = 1, FUN = "/", STATS = N.TESTS)
 

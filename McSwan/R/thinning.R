@@ -21,7 +21,7 @@
 #' @seealso \code{\link{gscan}}
 #' @export
 #' @examples Please refer to the vignette.
-thin <- function(scanResult, reftb, X, max_L = 1e6, signif.threshold = .5, maxIter = 1000, stat = mean) {
+thin <- function(scanResult, reftb, X, discard.extrarange = TRUE, max_L = 1e6, signif.threshold = .5, maxIter = 1000, stat = mean) {
 
 	if (class(X)=="observedDataset") {
 		if (any(sapply(scanResult[[1]], is.list))) stop("scanResult must be a result obtained from an observedDataset object.")
@@ -30,7 +30,7 @@ thin <- function(scanResult, reftb, X, max_L = 1e6, signif.threshold = .5, maxIt
 		for (dd in seq_along(demes4contig)) {
 			ddeme <- demes4contig[dd]
 			cat("\n==========================",ddeme,"==========================\n")
-			II <- findContigs(scanResult = scanResult, reftb = reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = signif.threshold, maxIter = maxIter, stat = stat)
+			II <- findContigs(scanResult = scanResult, reftb = reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = signif.threshold, maxIter = maxIter, stat = stat, discard.extrarange = discard.extrarange)
 			R = rbind(R, II)
 		}
 		rownames(R) <- 1:nrow(R)
@@ -48,7 +48,7 @@ thin <- function(scanResult, reftb, X, max_L = 1e6, signif.threshold = .5, maxIt
 				R <- c()
 				for (dd in seq_along(demes4contig)) {
 					ddeme <- demes4contig[dd]
-					II <- findContigs(scanResult = I, reftb = reftb, POS = X$SFS[[deme]][[i]]$obsData$POS, PAC = X$SFS[[deme]][[i]]$obsData$PAC, wSNP = X$SFS[[deme]][[i]]$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = signif.threshold, maxIter = maxIter, stat = stat)
+					II <- findContigs(scanResult = I, reftb = reftb, POS = X$SFS[[deme]][[i]]$obsData$POS, PAC = X$SFS[[deme]][[i]]$obsData$PAC, wSNP = X$SFS[[deme]][[i]]$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = signif.threshold, maxIter = maxIter, stat = stat, discard.extrarange = discard.extrarange)
 					#true.age = if (deme=="i0") NA else X$PRIORS[[deme]]$sweepAge[i]
 					#if (!is.na(II[1,1])) R = rbind(R, data.frame(true.model = deme, run = i, est.model = II$deme, true.age = true.age, II))
 					R = rbind(R, II)
@@ -66,7 +66,7 @@ thin <- function(scanResult, reftb, X, max_L = 1e6, signif.threshold = .5, maxIt
 
 }
 
-findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.threshold, maxIter = 1000, stat = mean) {
+findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.threshold, maxIter = 1000, stat = mean, discard.extrarange = TRUE) {
 	if (!is.character(deme)) stop("deme must be a string")
 
     v = if (deme != "i0") data.frame(pos = scanResult$pos, n = scanResult$stability[,deme], a = scanResult$param[,deme]) else data.frame(pos = scanResult$pos, n = scanResult$stability[,deme])
@@ -134,7 +134,7 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
 	cat("\n")
 	if (deme != "i0") {
 		for (i in 1:nrow(Kontigs)) {
-			ad = scan_core(reftb, POS, PAC, wSNP, firstPos = Kontigs[i,"pos_left"], lastPos = Kontigs[i,"pos_right"], minSNP = 0, windowSizes = NULL, nSteps = 1, infer.age = TRUE)
+			ad = scan_core(reftb, POS, PAC, wSNP, firstPos = Kontigs[i,"pos_left"], lastPos = Kontigs[i,"pos_right"], minSNP = 0, windowSizes = NULL, nSteps = 1, infer.age = TRUE, discard.extrarange = discard.extrarange)
 			Kontigs[i,"meta_estim"] = unique((ad$param)[,deme])
 			Kontigs[i,"pp"] = unique((ad$postpr)[,deme])
 		}
