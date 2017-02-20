@@ -229,13 +229,14 @@ with open(fpath) as f:
 				sfs = get_multisfs(segsites, islands, merge, multisfs)
 				ff.write('\t'.join(str(x) for x in sfs)+'\n')
 				# reinitialize
-				first = False
+				#first = False
 				segsites = []
+			first = False
 
 		if read == True and line[0].isdigit():
 			line = line.rstrip()
 			segsites.append([int(x) for x in list(line)])
-			first = False
+			#first = False
 
 # output of final rep
 sfs = get_multisfs(segsites, islands, merge, multisfs)

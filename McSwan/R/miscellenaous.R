@@ -85,9 +85,9 @@ rlogunif <- function(n, a, b) {
 #' @title Calculate the mode of a univariate distribution
 #' @param x a vector of numeric values
 #' @return A numeric value corresponding to the mode of the interpolated empirical distribution.
-#' @keywords internal
+#' @export
 getmode <- function(x, na.rm = TRUE) {
-  if (all(is.na(x))) return(NA)
+  if (na.rm==FALSE || all(is.na(x))) return(NA)
   if (length(!is.na(x))==1) return(x)
   z <- density(x, na.rm = na.rm)
   return(z$x[which.max(z$y)])
@@ -103,11 +103,16 @@ print.referenceTable <- function(X) {
     
     cat(paste("\n>>> GENERAL\n\n"))
     cat(paste("Demograpy:\t",X$GENERAL$msDemography,"\n\n"))
+	cat(paste("Date of creation:                                                   ",X$GENERAL$creationDate,"\n"))
     cat(paste("Diploid effective size of the reference population (No):            ",X$GENERAL$No,"\n"))
     cat(paste("Number of simulations per model:                                    ",X$GENERAL$nSimul,"\n"))
-    cat(paste("Window size (in base pairs):                                        ",X$GENERAL$windowSize,"\n"))
+    cat(paste("Simulated fragment size (in base pairs):                            ",X$GENERAL$windowSize,"\n"))
     cat(paste("Population sample sizes (number of gametes):                        ",paste(X$GENERAL$islandSizes, collapse=" "),"\n"))
-    cat("\n")
+    cat("\n\n")
+	if ("call.generate_priors"%in%names(X$GENERAL)) cat(paste("generate_priors() call:                                             ",paste0(deparse(X$GENERAL$call.generate_priors, width=500), collapse=""),"\n"))
+	if ("call.coalesce"%in%names(X$GENERAL)) cat(paste("coalesce() call:                                                    ",paste0(deparse(X$GENERAL$call.coalesce, width=500), collapse=""),"\n"))
+	if ("call.dim_reduction"%in%names(X$GENERAL)) cat(paste("dim_reduction() call:                                               ",paste0(deparse(X$GENERAL$call.dim_reduction, width=500), collapse=""),"\n"))
+     
                                                                                                                            
     cat("\n>>> PRIORS\n\n")
 	cat("Selective models: ",names(X$PRIORS),"\n")
@@ -134,9 +139,9 @@ print.referenceTable <- function(X) {
 		cat(paste("\t Standardized for PLS:",X$DIMREDUC$GENERAL$PLS_normalize,"\n"))
 		cat("\n")
 		cat("\t_LDA_\t",ifelse(class(X$DIMREDUC$LDA$model)=="lda","MASS::lda","HiDimDA::Dlda"),"\n")
-		cat(paste("\t\t |__ Number of retained components:",ncol(X$DIMREDUC$LDA$scores),"\n"))
+		cat(paste("\t\t |__ Done. Number of principal components used for LDA:",ncol(X$DIMREDUC$LDA$PCA.model),"\n"))
 		cat("\t_PLS_\t","pls::plsr","\n")
-		cat(paste("\t\t |__ Number of retained components:",paste(simplify2array(lapply(X$DIMREDUC$PLS, function(x) ncol(x$scores))), collapse=" & "),"\n"))
+		cat(paste("\t\t |__ Number of retained components:",paste(simplify2array(lapply(X$DIMREDUC$PLS, function(x) x$model$ncomp)), collapse=" & "),"\n"))
     }
 	cat("\n")
     
@@ -152,11 +157,13 @@ print.validationTable <- function(X) {
     
     cat(paste("\n>>> GENERAL\n\n"))
     cat(paste("Demograpy:\t",X$GENERAL$msDemography,"\n\n"))
+	cat(paste("Date of creation:                                                   ",X$GENERAL$creationDate,"\n"))
     cat(paste("Diploid effective size of the reference population (No):            ",X$GENERAL$No,"\n"))
     cat(paste("Number of simulations per model:                                    ",X$GENERAL$nSimul,"\n"))
-    cat(paste("Window size (in base pairs):                                        ",X$GENERAL$windowSize,"\n"))
+    cat(paste("Simulated fragment size (in base pairs):                            ",X$GENERAL$windowSize,"\n"))
     cat(paste("Population sample sizes (number of gametes):                        ",paste(X$GENERAL$islandSizes, collapse=" "),"\n"))
-    cat("\n")
+    cat("\n\n")
+	if ("call.generate_pseudoobs"%in%names(X$GENERAL)) cat(paste("generate_priors() call:                                             ",paste0(deparse(X$GENERAL$call.generate_pseudoobs, width=500), collapse=""),"\n"))
                                                                                                                            
     cat("\n>>> PRIORS\n\n")
 	cat("Selective models: ",names(X$PRIORS),"\n")
@@ -174,18 +181,20 @@ print.validationTable <- function(X) {
 	} else {
 		cat("Models: ",names(X$SFS),"\n")
 		cat("SFS properties:",ifelse(X$GENERAL$fold, "folded (= minor alleles frequencies)", "unfolded (= derived alleles frequencies)"),"\n")
-		cat("Number of SFS bins: ",length(X$SFS[[1]]),"\n")
+		cat("Number of SFS bins: ",length(X$SFS[[1]][[1]]$template),"\n")
 	}
     cat("\n")
     
+	if (F) {
     cat(paste("\n>>> ANALYSIS\n"))
 	if (!"ANALYSIS"%in%names(X)) {
 		cat("EMPTY.\n")
 	} else {
-		cat("DONE!\n")
+		cat("DONE.\n")
     }
 	cat("\n")
-    
+    }
+	
 }
 
 
@@ -205,7 +214,7 @@ print.observedDataset <- function(X) {
 
 
 #' @title Genomic SNP density in the observed dataset
-#' @description Given a window length, compute the distribution of within-window SNP counts in the observed dataset. This function is useful to get an idea about the SNP density in the observed dataset to fix (i) an appropriate window size and (ii) the minimum number of SNPs to retain a window for downstream analyses.
+#' @description Given a window length, compute the distribution of within-window SNP counts in the observed dataset. This function is useful to get an idea about the SNP density in the observed dataset to give hints about the appropriate window size ranges relatively to their SNP informational content.
 #' @param obs an \code{observedDataset} object, generated by \code{\link{get_SFS}}
 #' @param windowSize (integer) a window size (in base pairs)
 #' @return A summary of the distribution of within-window SNP counts.

@@ -34,6 +34,36 @@ theta_h <- function(sfs_1d) {
     return(e)
 }
 
+#' @title Convert multidimensional joint SSF to multiple unidimensional SFSs
+#' @export
+convert_to_1dSFS <- function(x, relativize = TRUE) {
+    if (is.vector(x)) {
+        nama <- names(x)
+        dim(x) <- c(1, length(x))
+        colnames(x) <- nama
+    }
+
+    X <- sapply(colnames(x), function(z) (strsplit(gsub("ac.", "", z), "\\.")))
+    X <- apply(t(simplify2array(X)), 2, as.integer)
+
+    Z <- apply(x, 1, function(x) {
+        sapply(1:ncol(X), function(j) {
+            y = as.vector(by(x, X[,j], sum))
+			y[1] = 0
+			if (relativize) {
+				sm = sum(y)
+				if (sm!=0) y = y/sm
+			}
+			return(y)
+        })
+    })
+    Z <- t(Z)
+
+    colnames(Z) <- c(sapply(1:ncol(X), function(j) paste0(j,"_",unique(X[,j]))))
+	
+    return(Z)
+}
+
 #' @title Tajima's D test
 #' @export
 #' @keywords internal

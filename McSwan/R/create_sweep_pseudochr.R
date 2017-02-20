@@ -240,6 +240,8 @@ SI <- paste(P[[isl]]$sweepAge[s]/(4*No), allIsl, beneFreq, collapse=" ")
   }
   
   valtb$GENERAL$sweepPos <- sweepPos * L
+  valtb$GENERAL$call.generate_pseudoobs <- match.call()
+  valtb$GENERAL$creationDate <- Sys.time()
   return(valtb)
 }
 

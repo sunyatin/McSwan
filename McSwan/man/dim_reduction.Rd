@@ -4,33 +4,27 @@
 \alias{dim_reduction}
 \title{Dimension reduction prior to approximate Bayesian computation}
 \usage{
-dim_reduction(x, relativeSFS, genetic_sumstats = TRUE,
-  removeCollinearCols = TRUE, compress_SFS = TRUE, LDA_minVariance = 0,
-  LDA_minVarPerModel = FALSE, LDA_NonNullP = 0.05, LDA_tol = 1e-09,
-  LDA_fastDiag = TRUE, LDA_sizePerModel = 10000, PLS_normalize = TRUE,
-  PLS_ncomp = NULL, PLS_maxncomp = 100, PLS_plotCV = FALSE,
-  GOF_n = 2000, GOF_abcTol = 0.01)
+dim_reduction(x, removeCollinearCols = TRUE, compress_SFS = TRUE,
+  LDA_xPC = 0.1, LDA_sizePerModel = NULL, PLS_normalize = TRUE,
+  PLS_ncomp = NULL, PLS_ncomp_method = "elbow", PLS_maxncomp = 100,
+  PLS_plotCV = TRUE)
 }
 \arguments{
 \item{x}{a \code{referenceTable} object with non-empty \code{PRIORS} and \code{SFS} slots}
 
-\item{relativeSFS}{(logical) whether to rescale the site frequency spectra by their SNP content (see Details)}
-
 \item{removeCollinearCols}{(logical) whether to remove collinear columns of the site frequency spectra prior to LDA & PLS dimension reduction (TRUE is recommended)}
 
-\item{LDA_minVariance}{(numeric) minimal variance across models' simulations for a given SFS bin (if the variance is inferior or equal to this value, the SFS bin will be discarded from LDA analysis)}
+\item{LDA_xPC}{(float between 0 and 1) number of principal components to retain (as a fraction of the number of cells in the SFS) to do subsequent LDA}
 
-\item{LDA_tol}{(numeric) a tolerance to decide if a matrix is singular, see \code{?lda}}
+\item{LDA_sizePerModel}{(integer) number of simulations per model to consider for training the PCA-LDA; \emph{NULL} (by default) forces to use all data}
 
 \item{PLS_normalize}{(logical) whether to normalize the spectra prior to PLS analysis (TRUE is recommended)}
 
 \item{PLS_ncomp}{(integer) if NULL, automatically select the fittest number of PLS components, else an integer to manually set the number of retained components}
 
+\item{PLS_ncomp_method}{(string) method to automatically select the best number of features: either "\emph{elbow}", "\emph{onesigma}" or "\emph{randomization}" (cf. \code{selectNcomp} in package \code{pls})}
+
 \item{PLS_maxncomp}{(integer) maximum number of PLS components to calculate before selecting the best set of features}
-
-\item{GOF_n}{(integer) estimate size of the null distribution for later window goodness-of-fit tests}
-
-\item{GOF_abcTol}{(numeric between 0 and 1) ABC tolerance ratio for the calculation of null distance distributions, ideally should equal the ABC tolerance for model selection (see \code{\link{abc}})}
 
 \item{plot_PLScv}{(logical) if TRUE, will render the cross-validation graphs of the PLS}
 }
@@ -44,6 +38,6 @@ Reduces the dimension of the summary statistics (joint multidimensional allele f
 Please refer to the vignette.
 }
 \seealso{
-\code{\emph{coalesce}}, \code{\emph{plsr}}, \code{\emph{lda}}, \code{\emph{abc}}
+\code{\link{coalesce}}, \code{\link{plsr}}, \code{\link{lda}}, \code{\link{abc}}
 }
 

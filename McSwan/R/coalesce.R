@@ -309,6 +309,7 @@ if (method=="partition" || method=="nMigrants") {
   }
 
   x$SFS <- SFS
+  x$GENERAL$call.coalesce <- match.call()
   return(x)
 }
 

@@ -12,5 +12,4 @@ getmode(x, na.rm = TRUE)
 \value{
 A numeric value corresponding to the mode of the interpolated empirical distribution.
 }
-\keyword{internal}
 

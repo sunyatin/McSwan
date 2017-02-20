@@ -15,7 +15,7 @@ summary.observedDataset(obs, windowSize)
 A summary of the distribution of within-window SNP counts.
 }
 \description{
-Given a window length, compute the distribution of within-window SNP counts in the observed dataset. This function is useful to get an idea about the SNP density in the observed dataset to fix (i) an appropriate window size and (ii) the minimum number of SNPs to retain a window for downstream analyses.
+Given a window length, compute the distribution of within-window SNP counts in the observed dataset. This function is useful to get an idea about the SNP density in the observed dataset to give hints about the appropriate window size ranges relatively to their SNP informational content.
 }
 \examples{
 load(system.file("data", "UNFOLDED_POLARIZED_2dSFS_CEU-LWK_20-20_chr2", package = "McSwan"))

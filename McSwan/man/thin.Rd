@@ -4,13 +4,13 @@
 \alias{thin}
 \title{Merge contiguous sweeps}
 \usage{
-thin(x, reftb, bwadjust = 1, minWindows = 1, summary_stat = "mean",
-  plot_thinning = FALSE)
+thin(scanResult, reftb, X, max_L = 1e+06, signif.threshold = 0.5,
+  maxIter = 1000, stat = mean)
 }
 \arguments{
-\item{x}{a dataframe returned by \code{\link{gscan}}}
-
 \item{reftb}{an initialized \code{referenceTable} object}
+
+\item{x}{a dataframe returned by \code{\link{gscan}}}
 
 \item{bwadjust}{(numeric) bandwidth coefficient, the algorithm will extend contiguity as far as \code{bwadjust * windowSize} from any focal window}
 

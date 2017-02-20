@@ -4,7 +4,7 @@
 \alias{linearize}
 \title{Merge model-specific multiSFSs into one big matrix}
 \usage{
-linearize(sfs, LDA_sizePerModel = 10000)
+linearize(sfs, LDA_sizePerModel = NULL)
 }
 \arguments{
 \item{sfs}{a list of model-specific multiSFS matrices}
