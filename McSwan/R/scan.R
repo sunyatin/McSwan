@@ -58,7 +58,7 @@ gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowS
 
 #' @title Core function for the genome scan
 #' @keywords internal
-scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSizes, nSteps, infer.age = TRUE, disc = TRUE, progressBar = TRUE) {
+scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSizes, nSteps, infer.age = TRUE, discard.extrarange = TRUE, progressBar = TRUE) {
 	if (class(reftb)!="referenceTable") stop("reftb is not a valid referenceTable")
 	if (discard.extrarange) cat("Out-of-range parameter estimates will be discarded.\n")
  

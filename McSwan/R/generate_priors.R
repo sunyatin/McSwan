@@ -64,8 +64,8 @@ get_max_sweep_ages <- function(ms, No) {
 generate_priors <- function(msDemography,
                             No,
                             fold,
-                            windowSize = 20000,
-                            nSimul = 10000,
+                            windowSize = 1e5,
+                            nSimul = 1e4,
                             restrictDemesTo = NULL,
                             sweepAge = NULL) {
   
