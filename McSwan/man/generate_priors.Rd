@@ -4,7 +4,7 @@
 \alias{generate_priors}
 \title{Initialize the reference table}
 \usage{
-generate_priors(msDemography, No, fold, windowSize = 20000, nSimul = 10000,
+generate_priors(msDemography, No, fold, windowSize = 1e+05, nSimul = 10000,
   restrictDemesTo = NULL, sweepAge = NULL)
 }
 \arguments{

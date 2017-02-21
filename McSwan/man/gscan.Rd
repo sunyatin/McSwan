@@ -6,7 +6,7 @@
 \usage{
 gscan(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10,
   windowSizes = seq(10000, 2e+05, length.out = 20), nSteps = 20, n = NULL,
-  discard.extrarange = TRUE)
+  discard_extraRange = TRUE)
 }
 \arguments{
 \item{reftb}{a \code{referenceTable} object, with non-empty \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements}

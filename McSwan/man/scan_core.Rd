@@ -5,7 +5,7 @@
 \title{Core function for the genome scan}
 \usage{
 scan_core(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSizes, nSteps,
-  infer.age = TRUE, disc = TRUE, progressBar = TRUE)
+  infer.age = TRUE, discard_extraRange = TRUE, progressBar = TRUE)
 }
 \keyword{internal}
 

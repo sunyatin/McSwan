@@ -86,10 +86,10 @@ rlogunif <- function(n, a, b) {
 #' @param x a vector of numeric values
 #' @return A numeric value corresponding to the mode of the interpolated empirical distribution.
 #' @export
-getmode <- function(x, na.rm = TRUE) {
+getmode <- function(x, na.rm = TRUE, ...) {
   if (na.rm==FALSE || all(is.na(x))) return(NA)
   if (length(!is.na(x))==1) return(x)
-  z <- density(x, na.rm = na.rm)
+  z <- density(x, na.rm = na.rm, ...)
   return(z$x[which.max(z$y)])
 }
 

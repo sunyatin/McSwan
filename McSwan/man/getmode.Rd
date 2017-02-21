@@ -4,7 +4,7 @@
 \alias{getmode}
 \title{Calculate the mode of a univariate distribution}
 \usage{
-getmode(x, na.rm = TRUE)
+getmode(x, na.rm = TRUE, ...)
 }
 \arguments{
 \item{x}{a vector of numeric values}

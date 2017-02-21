@@ -21,7 +21,8 @@
 #' @seealso \code{\link{gscan}}
 #' @export
 #' @examples Please refer to the vignette.
-thin <- function(scanResult, reftb, X, discard.extrarange = TRUE, max_L = 1e6, signif.threshold = .5, maxIter = 1000, stat = mean) {
+thin <- function(scanResult, reftb, X, discard_extraRange = TRUE, max_L = 1e6, signif.threshold = .5, maxIter = 1000, stat = mean, weighted_metaEstimate = TRUE) {
+	if (weighted_metaEstimate) cat("Meta-estimates are weighted by the SNP-wise posterior probability of sweep model.\n")
 
 	if (class(X)=="observedDataset") {
 		if (any(sapply(scanResult[[1]], is.list))) stop("scanResult must be a result obtained from an observedDataset object.")
@@ -30,7 +31,7 @@ thin <- function(scanResult, reftb, X, discard.extrarange = TRUE, max_L = 1e6, s
 		for (dd in seq_along(demes4contig)) {
 			ddeme <- demes4contig[dd]
 			cat("\n==========================",ddeme,"==========================\n")
-			II <- findContigs(scanResult = scanResult, reftb = reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = signif.threshold, maxIter = maxIter, stat = stat, discard.extrarange = discard.extrarange)
+			II <- findContigs(scanResult = scanResult, reftb = reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = signif.threshold, maxIter = maxIter, stat = stat, discard_extraRange = discard_extraRange, weighted_metaEstimate = weighted_metaEstimate)
 			R = rbind(R, II)
 		}
 		if (nrow(R)>=1) rownames(R) <- 1:nrow(R)
@@ -48,7 +49,7 @@ thin <- function(scanResult, reftb, X, discard.extrarange = TRUE, max_L = 1e6, s
 				R <- c()
 				for (dd in seq_along(demes4contig)) {
 					ddeme <- demes4contig[dd]
-					II <- findContigs(scanResult = I, reftb = reftb, POS = X$SFS[[deme]][[i]]$obsData$POS, PAC = X$SFS[[deme]][[i]]$obsData$PAC, wSNP = X$SFS[[deme]][[i]]$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = signif.threshold, maxIter = maxIter, stat = stat, discard.extrarange = discard.extrarange)
+					II <- findContigs(scanResult = I, reftb = reftb, POS = X$SFS[[deme]][[i]]$obsData$POS, PAC = X$SFS[[deme]][[i]]$obsData$PAC, wSNP = X$SFS[[deme]][[i]]$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = signif.threshold, maxIter = maxIter, stat = stat, discard_extraRange = discard_extraRange, weighted_metaEstimate = weighted_metaEstimate)
 					#true.age = if (deme=="i0") NA else X$PRIORS[[deme]]$sweepAge[i]
 					#if (!is.na(II[1,1])) R = rbind(R, data.frame(true.model = deme, run = i, est.model = II$deme, true.age = true.age, II))
 					R = rbind(R, II)
@@ -67,11 +68,14 @@ thin <- function(scanResult, reftb, X, discard.extrarange = TRUE, max_L = 1e6, s
 
 }
 
-findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.threshold, maxIter = 1000, stat = mean, discard.extrarange = TRUE) {
+findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.threshold, maxIter = 1000, stat = mean, discard_extraRange = TRUE, weighted_metaEstimate = TRUE) {
 	if (!is.character(deme)) stop("deme must be a string")
 
-    v = if (deme != "i0") data.frame(pos = scanResult$pos, n = scanResult$stability[,deme], a = scanResult$param[,deme]) else data.frame(pos = scanResult$pos, n = scanResult$stability[,deme])
-	
+    v = if (deme != "i0") data.frame(pos = scanResult$pos, 
+	n = scanResult$stability[,deme], 
+	a = scanResult$param[,deme],
+	w = scanResult$postpr[,deme]) else data.frame(pos = scanResult$pos, n = scanResult$stability[,deme])
+
 	# note that n could be scanResult$postpr[deme]
 	
 	RES <- data.frame(sweep.center = integer(0),
@@ -82,7 +86,8 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
 					  sweepAge = numeric(0),
 					  sweepAgeSynth = numeric(0),
 					  sweepAge.IC.low = numeric(0),
-					  sweepAge.IC.up = numeric(0))
+					  sweepAge.IC.up = numeric(0),
+					  nBaseSNPs = integer(0))
 
     Kontigs <- c()
     while (1) { cat(".")
@@ -113,7 +118,19 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
         if (length(ppLeft)==0 || abs(ppLeft-ppRight) == 0) break
 
         # append
-        ad <- c(v[c(ppLeft, ppRight),"pos"], stat(v[c(ppLeft:ppRight),"a"]), quantile(v[c(ppLeft:ppRight),"a"], c(.025, .975)))
+		do_NArm <- TRUE # important, sometimes weight-scaling can lead to NAs // added Feb 21st 2017
+		if (weighted_metaEstimate) {
+			subv <- na.omit(v[c(ppLeft:ppRight), c("a","w"), drop=F])
+			subv$w <- subv$w / sum(subv$w)
+			nsnp <- nrow(subv)
+			central_estimate <- stat(subv$a, na.rm = do_NArm, weights = subv$w)
+			IC_estimate <- c(coef(rq(subv$a~1, tau = c(.025, .975), weights = subv$w)))
+		} else {
+			nsnp <- sum(!is.na(v[c(ppLeft:ppRight),"a"]))
+			central_estimate <- stat(v[c(ppLeft:ppRight),"a"], na.rm = do_NArm)
+			IC_estimate <- quantile(v[c(ppLeft:ppRight),"a"], c(.025, .975), na.rm = do_NArm)
+		}
+        ad <- c(v[c(ppLeft, ppRight),"pos"], central_estimate, IC_estimate, nsnp)
         Kontigs <- rbind(Kontigs, ad)
 
         # substract
@@ -123,7 +140,7 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
     if (is.null(Kontigs) || length(Kontigs)==0) return( RES )
 
     Kontigs <- as.data.frame(Kontigs)
-    names(Kontigs) <- c("pos_left", "pos_right", "SNP_estim", "IC_low", "IC_up")
+    names(Kontigs) <- c("pos_left", "pos_right", "SNP_estim", "IC_low", "IC_up", "nBaseSNPs")
     Kontigs$pos_middle = with(Kontigs, 1/2*(pos_left+pos_right))
     Kontigs$length = with(Kontigs, pos_right-pos_left)
     Kontigs = Kontigs[order(Kontigs$pos_left),]
@@ -135,9 +152,15 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
 	cat("\n")
 	if (deme != "i0") {
 		for (i in 1:nrow(Kontigs)) {
-			ad = scan_core(reftb, POS, PAC, wSNP, firstPos = Kontigs[i,"pos_left"], lastPos = Kontigs[i,"pos_right"], minSNP = 0, windowSizes = NULL, nSteps = 1, infer.age = TRUE, discard.extrarange = discard.extrarange)
-			Kontigs[i,"meta_estim"] = unique((ad$param)[,deme])
-			Kontigs[i,"pp"] = unique((ad$postpr)[,deme])
+			ad = scan_core(reftb, POS, PAC, wSNP, firstPos = Kontigs[i,"pos_left"], lastPos = Kontigs[i,"pos_right"], minSNP = 0, windowSizes = NULL, nSteps = 1, infer.age = TRUE, discard_extraRange = discard_extraRange)
+			# meta_estim
+			vl <- unique((ad$param)[,deme])
+			if (length(vl)!=1) stop("error in meta-estimation: non-unique value (probably due to the presence of a NA)")
+			Kontigs[i,"meta_estim"] = vl
+			# pp
+			vl <- unique((ad$postpr)[,deme])
+			if (length(vl)!=1) stop("error in meta-postpr estimate: non-unique (value) (probably due to the presence of a NA)")
+			Kontigs[i,"pp"] = vl
 		}
 	}
 	
@@ -150,7 +173,8 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
 						sweepAge = Kontigs$SNP_est,
 						sweepAgeSynth = Kontigs$meta_estim,
 						sweepAge.IC.low = Kontigs$IC_low,
-						sweepAge.IC.up = Kontigs$IC_up))
+						sweepAge.IC.up = Kontigs$IC_up,
+						nBaseSNPs = Kontigs$nBaseSNPs))
 	rownames(RES) <- 1:nrow(RES)
 
     return(RES)

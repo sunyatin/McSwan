@@ -18,11 +18,15 @@
 #' }
 #' @seealso \code{\link{gscan}} for iterating this function by sliding windows along the genome
 #' @export
-gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowSizes = seq(1e4, 2e5, length.out = 20), nSteps = 20, n = NULL, discard.extrarange = TRUE) {
+gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowSizes = seq(1e4, 2e5, length.out = 20), nSteps = 20, n = NULL, discard_extraRange = TRUE) {
 	if (class(reftb)!="referenceTable") stop("reftb is not a valid referenceTable")
 	if (is.null(reftb$DIMREDUC)) stop("You have not performed the dimension reduction.")
 	if (minSNP < 1) stop("minSNP must be >= 1")
-	
+	if (!is.null(firstPos) && !is.null(endPos) && endPos <= firstPos) stop("endPos must be strictly greater than firstPos")
+	if (discard_extraRange) cat("Out-of-range parameter estimates will be discarded.\n")
+ 
+	cat("\n")
+
 	infer.age = TRUE
 
 	# by class
@@ -31,7 +35,7 @@ gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowS
 		if (!all.equal(colnames(reftb$SFS[[1]]), names(X$template))) stop("SFS bins are not the same between X and reftb")
 
 		# go
-		Y = scan_core(reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, firstPos = firstPos, lastPos = lastPos, minSNP = minSNP, windowSizes = windowSizes, nSteps = nSteps, infer.age = infer.age, discard.extrarange = discard.extrarange)
+		Y = scan_core(reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, firstPos = firstPos, lastPos = lastPos, minSNP = minSNP, windowSizes = windowSizes, nSteps = nSteps, infer.age = infer.age, discard_extraRange = discard_extraRange)
 	} else if (class(X)=="validationTable") { cat("Scanning a validationTable object.\n")
 		if (reftb$GENERAL$folded != X$GENERAL$folded) stop("Error: folding is not homogeneous across X and reftb.\n")
 		if (!all.equal(colnames(reftb$SFS[[1]]), names(X$SFS[[1]][[1]]$template))) stop("SFS bins are not the same between X and reftb")
@@ -44,7 +48,7 @@ gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowS
 			cat("\n\n==========================\n",deme,"\n==========================\n")
 			ad = list()
 			for (i in 1:n) { cat("\n\n>>> ",deme," ",i,"\n")
-				ad = c(ad, list(scan_core(reftb, POS = X$SFS[[deme]][[i]]$obsData$POS, PAC = X$SFS[[deme]][[i]]$obsData$PAC, wSNP = X$SFS[[deme]][[i]]$obsData$nSNP, firstPos = NULL, lastPos = NULL, minSNP = minSNP, windowSizes = windowSizes, nSteps = nSteps, infer.age = infer.age, discard.extrarange = discard.extrarange)))
+				ad = c(ad, list(scan_core(reftb, POS = X$SFS[[deme]][[i]]$obsData$POS, PAC = X$SFS[[deme]][[i]]$obsData$PAC, wSNP = X$SFS[[deme]][[i]]$obsData$nSNP, firstPos = NULL, lastPos = NULL, minSNP = minSNP, windowSizes = windowSizes, nSteps = nSteps, infer.age = infer.age, discard_extraRange = discard_extraRange)))
 			}
 			names(ad) = 1:n
 			Y[[deme]] = ad
@@ -58,11 +62,8 @@ gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowS
 
 #' @title Core function for the genome scan
 #' @keywords internal
-scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSizes, nSteps, infer.age = TRUE, discard.extrarange = TRUE, progressBar = TRUE) {
+scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSizes, nSteps, infer.age = TRUE, discard_extraRange = TRUE, progressBar = TRUE) {
 	if (class(reftb)!="referenceTable") stop("reftb is not a valid referenceTable")
-	if (discard.extrarange) cat("Out-of-range parameter estimates will be discarded.\n")
- 
-	cat("\n")
 	
 	# if requested, contract the scan range
 	if (!is.null(firstPos)) {
@@ -88,7 +89,7 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
         colnames(EST.AGE) <- names(reftb$DIMREDUC$PLS)
     }
     WEIGHTS = STABILITY
-	if (discard.extrarange == TRUE) PARAM.WEIGHTS = WEIGHTS[,-1]
+	if (discard_extraRange == TRUE) PARAM.WEIGHTS = WEIGHTS[,-1]
 	N.TESTS = rep(0, length(POS))
 	isFolded = (reftb$GENERAL$folded)
 
@@ -146,7 +147,7 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
                     focal.sfs = focal.sfs[,reftb$DIMREDUC$PLS[[lvl[l]]]$euCols,drop=F]
                     pls = c(predict(reftb$DIMREDUC$PLS[[lvl[l]]]$model, focal.sfs, type="response", comps=1:reftb$DIMREDUC$PLS[[lvl[l]]]$model$ncomp))
 					w = LDA$posterior[, lvl[l]]
-					if (discard.extrarange == TRUE) {
+					if (discard_extraRange == TRUE) {
 						Range = unlist(reftb$GENERAL$sweepAgeDistrib[[lvl[l]]][2:3])
 						est_is_ok = (pls >= Range[1]) & (pls <= Range[2])
 						pls[!est_is_ok] = NA
@@ -182,7 +183,7 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
     } #i
 
     if (infer.age) {
-		if (discard.extrarange) {
+		if (discard_extraRange) {
 			EST.AGE = EST.AGE / PARAM.WEIGHTS
 		} else {
 			EST.AGE = EST.AGE / WEIGHTS[,-1] # must be done before averaging the WEIGHTS
@@ -190,6 +191,11 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
 	}
     STABILITY = sweep(STABILITY, MARGIN = 1, FUN = "/", STATS = N.TESTS)
     WEIGHTS = sweep(WEIGHTS, MARGIN = 1, FUN = "/", STATS = N.TESTS)
+	
+	# in case where the scaling by N.TESTS leads to Inf, set NA (because Inf could be interpreted as overconfidence, what Inf are NOT)
+	STABILITY[!is.finite(STABILITY)] <- NA
+	WEIGHTS[!is.finite(WEIGHTS)] <- NA
+	EST.AGE[!is.finite(EST.AGE)] <- NA
 
 	return(list("pos" = POS,
 	"stability" = STABILITY,

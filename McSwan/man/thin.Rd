@@ -4,8 +4,9 @@
 \alias{thin}
 \title{Merge contiguous sweeps}
 \usage{
-thin(scanResult, reftb, X, discard.extrarange = TRUE, max_L = 1e+06,
-  signif.threshold = 0.5, maxIter = 1000, stat = mean)
+thin(scanResult, reftb, X, discard_extraRange = TRUE, max_L = 1e+06,
+  signif.threshold = 0.5, maxIter = 1000, stat = mean,
+  weighted_metaEstimate = TRUE)
 }
 \arguments{
 \item{reftb}{an initialized \code{referenceTable} object}
