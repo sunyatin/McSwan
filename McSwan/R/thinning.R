@@ -33,7 +33,7 @@ thin <- function(scanResult, reftb, X, discard.extrarange = TRUE, max_L = 1e6, s
 			II <- findContigs(scanResult = scanResult, reftb = reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = signif.threshold, maxIter = maxIter, stat = stat, discard.extrarange = discard.extrarange)
 			R = rbind(R, II)
 		}
-		rownames(R) <- 1:nrow(R)
+		if (nrow(R)>=1) rownames(R) <- 1:nrow(R)
 		return(R)
 	} else if (class(X)=="validationTable") {
 		if (!any(sapply(scanResult[[1]], is.list))) stop("scanResult must be a result obtained from a validationTable object.")
@@ -53,6 +53,7 @@ thin <- function(scanResult, reftb, X, discard.extrarange = TRUE, max_L = 1e6, s
 					#if (!is.na(II[1,1])) R = rbind(R, data.frame(true.model = deme, run = i, est.model = II$deme, true.age = true.age, II))
 					R = rbind(R, II)
 				}
+				if (nrow(R)>=1) rownames(R) <- 1:nrow(R)
 				ANALYSIS[[deme]][[i]] = R
 			}
 		}
