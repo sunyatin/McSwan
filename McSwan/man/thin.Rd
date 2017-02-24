@@ -5,7 +5,7 @@
 \title{Merge contiguous sweeps}
 \usage{
 thin(scanResult, reftb, X, discard_extraRange = TRUE, max_L = 1e+06,
-  signif.threshold = 0.5, maxIter = 1000, stat = mean,
+  signif.threshold = 0.5, maxIter = 1000, stat = getmode,
   weighted_metaEstimate = TRUE)
 }
 \arguments{

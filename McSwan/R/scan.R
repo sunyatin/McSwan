@@ -97,7 +97,7 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
 	PAC <- factor(as.character(PAC), levels = colnames(reftb$SFS[[1]]))
 	n = 0
 	if (is.null(windowSizes)) windowSizes = maxPos - minPos + 100
-	if (progressBar) { nBarElmts <- 100; nMax <- length(windowSizes) * nSteps; nLast <- 1; bar <- rep(" ", nBarElmts) }
+	if (progressBar) { nBarElmts <- 100; nMax <- length(windowSizes) * nSteps; nLast <- 1; bar <- rep(" ", nBarElmts); cat("1%") }
 
     for (i in seq_along(windowSizes)) { if (!progressBar) cat("\n",i," ")
         starts = seq(minPos, minPos + windowSizes[i] - 1, length.out = nSteps)

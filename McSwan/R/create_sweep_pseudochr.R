@@ -35,7 +35,7 @@ generate_pseudoobs <- function(reftb,
                                nReps = 1, 
                                verbose = FALSE, 
                                doSFS = TRUE,
-                               default_sweepAge_prior_func = "runif") {
+                               default_sweepAge_prior_func = "rlogunif") {
 
 	# internally set options
 	save_each_file = FALSE
@@ -72,7 +72,7 @@ if (is.null(L)) stop("L must not be NULL")
   # sweepAge format
   if (is.null(sweepAge)) {
     sweepAge <- reftb$GENERAL$sweepAgeDistrib
-    #sweepAge <- lapply(sweepAge, function(x) { x[[1]] <- default_sweepAge_prior_func; return(x) })
+    sweepAge <- lapply(sweepAge, function(x) { x[[1]] <- default_sweepAge_prior_func; return(x) })
   } else {
     if (!is.list(sweepAge)) stop("sweepAge must be a list of sub-lists, cf. documentation")
     if (!is.list(sweepAge[[1]])) stop("sweepAge must be a list of sub-lists, cf. documentation")

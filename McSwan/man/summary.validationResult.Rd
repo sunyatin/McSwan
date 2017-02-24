@@ -4,7 +4,7 @@
 \alias{summary.validationResult}
 \title{Summary of the sliding validation}
 \usage{
-summary.validationResult(X, valtb, file)
+summary.validationResult(X, valtb, SNP_wise_estimates = TRUE, file)
 }
 \arguments{
 \item{X}{a \code{validationTable} object with non-empty \code{ANALYSIS} slot (ie. obtained after executing the \code{sliding_validation} function)}

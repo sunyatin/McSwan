@@ -6,7 +6,7 @@
 \usage{
 generate_pseudoobs(reftb, nSimul, L, recRate, sweepingIsl = NULL,
   sweepAge = NULL, sweepPos = 0.5, Smu = NULL, nReps = 1,
-  verbose = FALSE, doSFS = TRUE, default_sweepAge_prior_func = "runif")
+  verbose = FALSE, doSFS = TRUE, default_sweepAge_prior_func = "rlogunif")
 }
 \arguments{
 \item{reftb}{an initialized \emph{referenceTable} object}
