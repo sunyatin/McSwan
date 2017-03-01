@@ -1,5 +1,5 @@
 
-#' @title Generates pseudo-observed genomic fragments under arbitrary demographic histories with and without positive sweeps
+#' @title Generates pseudo-observed genomic fragments under arbitrary demographic histories with and without SOFT sweeps
 #' @description Simulations performed with Ewing's \emph{et al.} \code{MSMS} software.
 #' @param reftb an initialized \emph{referenceTable} object
 #' @param nSimul (integer) number of independent genomic fragments to simulate for each evolutionary model
@@ -24,14 +24,15 @@
 #' @references Ewing et Hermisson (2010) MSMS: a coalescent simulation program including recombination, demographic structure and selection at a single locus. \emph{Bioinformatics}.
 #' @seealso \code{\link{combine}} to combine outputs from parallelized \code{generate_pseudoobs} calls
 #' @export
-generate_pseudoobs <- function(reftb, 
+generate_pseudoobs_soft <- function(reftb, 
                                nSimul, 
                                L,
                                recRate, 
                                sweepingIsl = NULL,
                                sweepAge = NULL,
                                sweepPos = .5,
-                               Smu = NULL, 
+                               Smu = NULL,
+							   initial_frequency,
                                nReps = 1, 
                                verbose = FALSE, 
                                doSFS = TRUE,
@@ -142,7 +143,7 @@ if (FALSE) {
         #beneFreq <- paste(rep(1/No, nIsl), collapse=" ")
         #beneFreq <- paste(c(1/2053, 1/29153), collapse=" ")
         beneFreq <- sapply(seq_along(islandSizes), function(j) {
-          1 / (2*No * get_size(ms, j, P[[isl]]$sweepAge[s]/(4*No)))
+          return(initial_frequency)
         })
         beneFreq <- paste(beneFreq, collapse=" ")
         
@@ -155,7 +156,7 @@ allIsl <- length(islandSizes)
 s2 <- gsub(" -es ", "", ms); nES <- (nchar(ms)-nchar(s2))/nchar(" -es ")
 allIsl <- allIsl + nES
 beneFreq <- sapply(1:allIsl, function(j) {
-  1 / (2*No * get_size(ms, j, P[[isl]]$sweepAge[s]/(4*No)))
+  return(initial_frequency)
 })
 beneFreq <- paste(beneFreq, collapse=" ")
 SI <- paste(P[[isl]]$sweepAge[s]/(4*No), allIsl, beneFreq, collapse=" ")
