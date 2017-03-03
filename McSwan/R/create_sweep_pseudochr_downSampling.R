@@ -73,8 +73,8 @@ if (is.null(L)) stop("L must not be NULL")
   nIsl <- length(islandSizes)
   
   if (ncol(downsampleSizes)!=length(islandSizes)) stop("vector of downsampled sizes must have length equals to the number of islands in the MS command.")
-  dsok <- sweep(downsampleSizes, 1, FUN="-", islandSizes)
-  if (any(dsok>0)) stop("downsampled sizes must be inferior or equal to the original island sizes of the MS command.")
+  dsok <- sweep(downsampleSizes, MARGIN=2, FUN="-", STATS=islandSizes)
+  if (any(dsok>0)) stop("downsampled sizes must be inferior or equal to the original island sizes of the MS command. Please use the reference table generated with the highest number of samples.\n")
 
   # sweepAge format
   if (is.null(sweepAge)) {

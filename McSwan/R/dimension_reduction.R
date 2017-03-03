@@ -57,7 +57,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, PL
     
     # perform QR decomposition
     colnames <- names(euCols)[euCols]
-    QR <- qr(x = ss[,euCols], tol = 1e-7, LAPACK = FALSE)
+    QR <- qr(x = ss[,euCols,drop=F], tol = 1e-7, LAPACK = FALSE)
     rank <- QR$rank
     cat(paste("\t - Removed",sum(euCols)-rank,"collinear columns, based on QR decomposition.\n"))
     euQRcols <- QR$pivot[1:rank]
@@ -78,7 +78,7 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, PL
     
   #}
   
-  ss <- ss[,euCols]
+  ss <- ss[,euCols,drop=F]
 
   ##############################
   ##############################  
