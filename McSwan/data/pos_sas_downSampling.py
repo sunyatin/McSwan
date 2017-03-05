@@ -96,7 +96,6 @@ def get_multisfs(segsites, islands, merge, multisfs_template, pos, downsizes):
 				s = [0] * nseg
 			else:
 				idx = range(prev_idx, prev_idx + downsizes[i])
-				print idx
 				#prev_idx = idx[-1] + 1
 				prev_idx = sum(islands[0:(i+1)])
 				s = segsites[idx[0]]

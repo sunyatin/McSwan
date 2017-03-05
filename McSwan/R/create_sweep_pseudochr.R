@@ -32,6 +32,7 @@ generate_pseudoobs <- function(reftb,
                                sweepAge = NULL,
                                sweepPos = .5,
                                Smu = NULL, 
+							   sAA = 1,
                                nReps = 1, 
                                verbose = FALSE, 
                                doSFS = TRUE,
@@ -39,6 +40,7 @@ generate_pseudoobs <- function(reftb,
 
 	# internally set options
 	save_each_file = FALSE
+	#sAA <- 1
   
 if (is.null(L)) stop("L must not be NULL")
 
@@ -60,7 +62,7 @@ if (is.null(L)) stop("L must not be NULL")
   valtb$GENERAL$nSimul <- nSimul
   
   # permanent parameters
-  sAA <- 1; sAa <- .5 * sAA; saa <- 0
+  sAa <- .5 * sAA; saa <- 0
   #sAa <- 1*sAA ####!!!!
   
   # wp

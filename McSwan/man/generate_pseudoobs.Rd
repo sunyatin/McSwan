@@ -5,7 +5,7 @@
 \title{Generates pseudo-observed genomic fragments under arbitrary demographic histories with and without positive sweeps}
 \usage{
 generate_pseudoobs(reftb, nSimul, L, recRate, sweepingIsl = NULL,
-  sweepAge = NULL, sweepPos = 0.5, Smu = NULL, nReps = 1,
+  sweepAge = NULL, sweepPos = 0.5, Smu = NULL, sAA = 1, nReps = 1,
   verbose = FALSE, doSFS = TRUE, default_sweepAge_prior_func = "runif")
 }
 \arguments{
