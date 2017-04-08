@@ -245,7 +245,7 @@ SI <- paste(P[[isl]]$sweepAge[s]/(4*No), allIsl, beneFreq, collapse=" ")
 		  for (ds in 1:nrow(downsampleSizes)) {
 			  write("", file=paste(tempDir,"/MSMS.txt", sep=""))
 			  cmd <- paste(pythonPath," ",pymsmsDownSample," -i ",tempDir,"/segsitesCLEAN.txt -o ",tempDir,"/MSMS.txt -L ",sprintf('%i',L)," -d ",paste(downsampleSizes[ds,], collapse=" "), sep="")
-	cat(cmd,"\n")
+#cat(cmd,"\n")
 			  if (valtb$GENERAL$folded==TRUE) cmd <- paste(cmd,"--fold")
 			  system(cmd, intern=F)
 			  nf <- get_SFS(paste(tempDir,"/MSMS.txt", sep=""), reftb)

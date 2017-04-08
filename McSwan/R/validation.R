@@ -69,6 +69,11 @@ perf_rates <- function(CM) {
   RR$FDR <- as.numeric(RR$FDR)
   
   names(RR) <- c("positive.outcome", "negative.outcomes", "TPR.sensitivity", "TNR.specificity", "FDR")
+  
+  # performance statistics for multiclass classifier
+  cmm <- as.matrix(CM)
+  RR <- list("binary" = RR, "multiclass" = sum(diag(cmm))/sum(c(cmm)))
+  
   return(RR)
 }
 
@@ -111,7 +116,7 @@ confusion_matrix <- function(cvd) {
 #' @export
 #' @seealso \code{\link{sliding_validation}}
 #' @examples Please refer to the vignette.
-summary.validationResult <- function(X, valtb, file) {
+summary.validationResult <- function(X, valtb, SNP_wise_estimates = TRUE, file) {
   
   # (class(X) == "validationResult") {
   if (class(valtb)!="validationTable") stop("valtb is not a valid validationTable object.")
@@ -159,7 +164,7 @@ summary.validationResult <- function(X, valtb, file) {
         add <- data.frame("true.model" = deme,
                         "simID" = names(Y[[deme]])[j],
                         "est.model" = as.character(Y[[deme]][[j]]$deme),
-                        "est.sweepAge" = Y[[deme]][[j]]$sweepAge,
+                        "est.sweepAge" = NA,
                         "est.sweepAge.IClow" = Y[[deme]][[j]]$sweepAge.IC.low,
                         "est.sweepAge.ICup" = Y[[deme]][[j]]$sweepAge.IC.up,
                         "est.sweepPos" = Y[[deme]][[j]]$sweep.center,
@@ -168,10 +173,14 @@ summary.validationResult <- function(X, valtb, file) {
                         "est.sweepEnd" = Y[[deme]][[j]]$sweep.rbound,
                         "true.sweepAge" = ifelse(deme=="i0", NA, valtb$PRIORS[[deme]]$sweepAge[j]),
                         "true.recRate" = ifelse(deme=="i0", NA, valtb$PRIORS[[deme]]$recRate[j]), stringsAsFactors=F)
+		if (SNP_wise_estimates) add$est.sweepAge <- Y[[deme]][[j]]$sweepAge else add$est.sweepAge <- Y[[deme]][[j]]$sweepAgeSynth
       }
       D <- rbind(D, add)
     }
   }
+  
+  # store D
+  R$table <- D
   
   ## remove i0 from estimations for i(!=0), otherwise absurdly inflates the FPR
   #D <- D[-c(which(D$true.model!="i0"&D$est.model=="i0")),]
@@ -278,7 +287,9 @@ summary.validationResult <- function(X, valtb, file) {
 		geom_point(size=1, alpha=.8) +
 		theme_bw() + #theme(legend.position = "top") +
 		facet_wrap(~true.model) +
-		scale_colour_distiller("log10(rho)", palette="Spectral") +
+		#scale_colour_distiller("log10(rho)", palette="Spectral") +
+		scale_colour_gradient("log10(rho)", low="gray", high="black") +
+geom_point(size=2, alpha=.8, col="black", pch="+") +
 		coord_equal(xlim=c(l[1], l[2]), ylim=c(l[1], l[2])) +
 		ggtitle("Parameter estimation performance") +
 		xlab("True sweep ages (generations BP, gBP)") +
@@ -294,12 +305,14 @@ summary.validationResult <- function(X, valtb, file) {
 	  g <- ggplot2::ggplot(data=tmp, aes(x = true.sweepAge, 
 								y = est.sweepAge, 
 								col = log10(true.recRate))) +
-		geom_segment(aes(x=true.sweepAge, xend=true.sweepAge, y=est.sweepAge.IClow, yend=est.sweepAge.ICup, col=log10(true.recRate)), alpha=.7) +
+		geom_segment(aes(x=true.sweepAge, xend=true.sweepAge, y=est.sweepAge.IClow, yend=est.sweepAge.ICup), alpha=.7) +
 		geom_abline(intercept=0, slope=1, col="gray", size=1, alpha=.6) +
 		geom_point(size=1, alpha=.8) +
 		theme_bw() + #theme(legend.position = "top") +
 		facet_wrap(~true.model) +
-		scale_colour_distiller("log10(rho)", palette="Spectral") +
+		#scale_colour_distiller("log10(rho)", palette="Spectral") +
+		scale_colour_gradient("log10(rho)", low="gray", high="black") +
+geom_point(size=2, alpha=.8, col="black", pch="+") +
 		coord_equal(xlim=c(l[1], l[2]), ylim=c(l[1], l[2])) +
 		ggtitle("Parameter estimation performance with 95% confidence intervals") +
 		xlab("True sweep ages (generations BP, gBP)") +

@@ -8,6 +8,7 @@
 #' @param outPath path/name of the file in which the function will write the per-population per-SNP allele counts
 #' @param chromosome name of the chromosome to analyze (should match a chromosome name in the VCF file)
 #' @param minQUAL any SNP with \code{QUAL < minQUAL} will be filtered out (set \code{minQUAL = NULL} to disable the filtering)
+#' @param haploidize set this option to TRUE to randomly draw a single allele out of the diploid genotypes (useful to mitigate the impact of low-coverage sequencing)
 #' @details Non biallic SNPs in the VCF file will be automatically filtered out. If there are more samples in the VCF file than samples specified in \emph{pops}, those supernumary samples will be ignored. Note that the function works also for unsampled populations.
 #' 
 #' The \code{pops} dataframe must have two columns: (i) names of the samples, matching the names in the VCF file; (ii) indices of the populations to which the samples belong, these indices must correspond to the indices of the populations specified in the \emph{MS}-formatted demographic history. For instance, if the sample "B101" in the VCF belongs to the third-indexed population of your demographic history, the first line will read: "B101" 3. Note that MS starts population indexing at 1 (included).
@@ -16,7 +17,7 @@
 #' @examples Please refer to the vignette.
 #' @seealso \code{\link{get_SFS}}
 #' @export
-convert_VCF <- function(vcfPath, pops, reftb, outPath, chromosome, minQUAL = NULL) {
+convert_VCF <- function(vcfPath, pops, reftb, outPath, chromosome, haploidize = FALSE, minQUAL = NULL) {
 
   ms <- reftb$GENERAL$msDemography
   nIslands <- ifelse(!grepl("-I", ms), 1, NA)
@@ -40,10 +41,13 @@ convert_VCF <- function(vcfPath, pops, reftb, outPath, chromosome, minQUAL = NUL
   doFold <- reftb$GENERAL$folded
   if (doFold) cmd <- paste(cmd,"-fold")
   
+  # haploidize
+  if (haploidize) cmd <- paste(cmd,"-haploidize")
+  
   # min QUAL?
   if (!is.null(minQUAL)) cmd <- paste(cmd,"-minQ",minQUAL)
   
-  cat("Proceeding to the conversion...\n")
+  cat("Converting...\n")
   system(cmd)
 }
 
