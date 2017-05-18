@@ -22,7 +22,7 @@ gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowS
 	if (class(reftb)!="referenceTable") stop("reftb is not a valid referenceTable")
 	if (is.null(reftb$DIMREDUC)) stop("You have not performed the dimension reduction.")
 	if (minSNP < 1) stop("minSNP must be >= 1")
-	if (!is.null(firstPos) && !is.null(endPos) && endPos <= firstPos) stop("endPos must be strictly greater than firstPos")
+	if (!is.null(firstPos) && !is.null(lastPos) && lastPos <= firstPos) stop("lastPos must be strictly greater than firstPos")
 	if (discard_extraRange) cat("Out-of-range parameter estimates will be discarded.\n")
  
 	cat("\n")
