@@ -2,7 +2,7 @@
 % Please edit documentation in R/miscellenaous.R
 \name{rlogunif}
 \alias{rlogunif}
-\title{Generates log10-uniform distribution}
+\title{Generates log10-uniform distributions}
 \usage{
 rlogunif(n, a, b)
 }
@@ -17,7 +17,7 @@ rlogunif(n, a, b)
 A vector of \emph{n} values drawn from a log10-uniform distribution.
 }
 \description{
-This function samples values out of a log10-uniform distribution. This distribution is useful to uniformly sample wide-ranged values across all the orders of magnitudes (e.g. ranges of values checking log10(upperBound) - log10(lowerBound) > 3).
+This function samples values out of a log10-uniform distribution.
 }
 \details{
 \code{Y} follows a log10-uniform distribution <=> \code{Y=10^(x)} where \code{x} follows a uniform distribution between \code{log10(a)} and \code{log10(b)}.

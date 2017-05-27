@@ -5,8 +5,8 @@
 \title{Generates pseudo-observed genomic fragments under arbitrary demographic histories with and without positive sweeps}
 \usage{
 generate_pseudoobs(reftb, nSimul, L, recRate, sweepingIsl = NULL,
-  sweepAge = NULL, sweepPos = 0.5, Smu = NULL, sAA = 1, nReps = 1,
-  verbose = FALSE, doSFS = TRUE, default_sweepAge_prior_func = "runif")
+  sweepAge = NULL, sweepPos = 0.5, Smu = NULL, sAA = 1,
+  verbose = FALSE, default_sweepAge_prior_func = "runif")
 }
 \arguments{
 \item{reftb}{an initialized \emph{referenceTable} object}
@@ -19,19 +19,17 @@ generate_pseudoobs(reftb, nSimul, L, recRate, sweepingIsl = NULL,
 
 \item{sweepingIsl}{(array of integers) by default, McSwan will generate fragments under all population-specific sweep models; if you want to restrict the simulations of sweep models to some given populations, provide the population \bold{indices} in a vector; note that population indices correspond to their position under the \code{-I} switch of the \code{MS} command, and note that the index of the first population is \bold{1}}
 
-\item{sweepAge}{(special list) prior distribution for the sweep ages (scaled in generations before present) (if \code{NULL} and the number of demes is superior to 2, the prior distribution will be automatically determined, otherwise it is mandatory to specify the distribution manually, see \link{Details})}
+\item{sweepAge}{(special list) prior distribution for the sweep ages (scaled in generations before present) (if \code{NULL} and the number of demes is superior to 2, the prior distribution will be automatically determined, otherwise it is mandatory to specify the distribution manually, see \code{Details})}
 
 \item{sweepPos}{(numeric) relative position of the beneficial mutation (eg. for \eqn{sweepPos=0.5}, the beneficial mutation will be located at the center of the genomic region)}
 
-\item{Smu}{forward mutation rate for the advantageous allele (per base per generation) of the beneficial allele; if \code{NULL} this rate will be equal to the mean mutation rate \eqn{\mu} used in \eqn{\theta}}
+\item{Smu}{forward mutation rate for the advantageous allele (per base per generation); if \code{NULL} this rate will be equal to the mean mutation rate \eqn{\mu}}
 
-\item{nReps}{(integer) number of replicates to simulate per parameter combination (by default \code{nReps=1}, but you can increase this value to reduce the stochasticity of the coalescent process, the function will automatically average the coalescent-generated site frequency spectra)}
+\item{sAA}{the selection coefficient of the individual homozygote for the beneficial allele, see MSMS manual.}
 
 \item{verbose}{(logical) verbose mode}
 
-\item{doSFS}{(logical) whether to compute the joint site frequency spectra associated to the genomic fragments (TRUE recommended)}
-
-\item{default_sweepAge_prior_func}{if \code{sweepAge = NULL} you can force here the prior distribution of the sweep ages (e.g. "runif" or "rlogunif"), however the distribution limits will still be automatically set}
+\item{default_sweepAge_prior_func}{if \code{sweepAge = NULL} you can force here the prior distribution of the sweep ages (e.g. "runif" or "rlogunif"), however the range of the distribution will still be set automatically}
 }
 \value{
 An object of class \code{validationTable} containing positional allele counts in the \code{SFS} slot.
@@ -47,9 +45,6 @@ If you manually provide the prior distributions for the \bold{sweep ages}, you h
 }
 }
 \references{
-Ewing et Hermisson (2010) MSMS: a coalescent simulation program including recombination, demographic structure and selection at a single locus. \emph{Bioinformatics}.
-}
-\seealso{
-\code{\link{combine}} to combine outputs from parallelized \code{generate_pseudoobs} calls
+Ewing et Hermisson (2010) MSMS: a coalescent simulation program including recombination, demographic structure and selection at a single locus. \emph{Bioinformatics}
 }
 

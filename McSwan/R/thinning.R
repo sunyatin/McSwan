@@ -1,27 +1,33 @@
 
-#' @title Merge contiguous sweeps
-#' @description This function merges contiguous regions detected by \code{\link{gscan}} as having experienced a selective sweep.
-#' @param x a dataframe returned by \code{\link{gscan}}
+#' @title Merge contiguous swept loci (tiling path inference)
+#' @description This function merges contiguous regions detected as having experienced a selective sweep (i.e. following a \code{\link{gscan}}).
+#' @param scanResult a list returned by \code{\link{gscan}}
 #' @param reftb an initialized \code{referenceTable} object
-#' @param bwadjust (numeric) bandwidth coefficient, the algorithm will extend contiguity as far as \code{bwadjust * windowSize} from any focal window
-#' @param minWindows (integer) the minimum number of contiguous windows required to perform contiguity search
-#' @param summary_stat (string) the central statistic to average the parameter estimates of merged contiguous windows ("mean" recommended)
-#' @param plot_thinning (logical) plot a representation of the genomic fragment with the contiguous sweep regions
-#' @return Returns a dataframe of the merged contiguous sweeps. One sweep per line, and in columns:
+#' @param X the observed or pseudo-observed dataset used in the \code{\link{gscan}} call
+#' @param max_L (integer) the "horizon distance" (in base pairs), ie. the maximum distance from any position above which loci detected as under selection cannot be assumed to be related to the same sweep region
+#' @param signif.threshold (numeric between 0 and 1) a selection score cut-off above which we decide that a SNP is positive selected
+#' @param maxIter (integer) maximum number of iterations used for the tiling path inference
+#' @param stat (function) a statistic used to center the SNP-wise sweep age estimates (\code{getmode} was shown to be the least biased but you may also try \code{median} or \code{mean})
+#' @return Returns a dataframe of the estimated sweep contigs. One sweep region per line, and in columns:
 #' \itemize{ 
-#' \item \code{\bold{sweep.center}} center of the contiguous sweep region
-#' \item \code{\bold{sweep.lbound}} first position of the contiguous sweep region
-#' \item \code{\bold{sweep.rbound}} last position of the contiguous sweep region
-#' \item \code{\bold{BF}} aggregated Bayes Factor of the contiguous sweep region
-#' \item \code{\bold{deme}} population detected to have experienced a selective sweep (given as "i" & index of the population in the \emph{MS} command)
-#' \item \code{\bold{sweepAge}} posterior estimate for the sweep age
-#' \item \code{\bold{sweepAge.IC.low}} lower boundary of the 95% credible interval for the sweep age estimation
-#' \item \code{\bold{sweepAge.IC.up}} upper boundary of the 95% credible interval for the sweep age estimation
+#' \item \code{\bold{sweep.center}} the center of the sweep region contig
+#' \item \code{\bold{sweep.lbound}} the first position of the sweep region contig
+#' \item \code{\bold{sweep.rbound}} the last position of the sweep region contig
+#' \item \code{\bold{BF}} aggregated Bayes Factor of the sweep region contig
+#' \item \code{\bold{deme}} the population detected to have experienced a selective sweep (given as "\emph{i}" and the index of the population in the \emph{MS} command)
+#' \item \code{\bold{sweepAge}} the point estimate for the sweep age
+#' \item \code{\bold{sweepAge.IC.low}} lower boundary of the 95\% confidence interval for the sweep age estimation
+#' \item \code{\bold{sweepAge.IC.up}} upper boundary of the 95\% confidence interval for the sweep age estimation
+#' \item \code{\bold{sweepAge.postDistrib}} posterior distribution of the sweep age estimation
 #' }
 #' @seealso \code{\link{gscan}}
 #' @export
 #' @examples Please refer to the vignette.
-thin <- function(scanResult, reftb, X, discard_extraRange = TRUE, max_L = 1e6, signif.threshold = .5, maxIter = 1000, stat = getmode, weighted_metaEstimate = TRUE) {
+thin <- function(scanResult, reftb, X, max_L = 1e6, signif.threshold = .5, maxIter = 1000, stat = getmode) {
+	output_region_wise_estimates = FALSE
+	discard_extraRange = TRUE
+	weighted_metaEstimate = TRUE
+
 	if (weighted_metaEstimate) cat("Meta-estimates are weighted by the SNP-wise posterior probability of sweep model.\n")
 	if (length(signif.threshold)>1) {
 		names(signif.threshold) = paste0("i",seq_along(signif.threshold))
@@ -42,6 +48,10 @@ thin <- function(scanResult, reftb, X, discard_extraRange = TRUE, max_L = 1e6, s
 			R = rbind(R, II)
 		}
 		if (nrow(R)>=1) rownames(R) <- 1:nrow(R)
+		if (output_region_wise_estimates==FALSE) {
+			R$BFSynth = NULL
+			R$sweepAgeSynth = NULL
+		}
 		return(R)
 	} else if (class(X)=="validationTable") {
 		if (!any(sapply(scanResult[[1]], is.list))) stop("scanResult must be a result obtained from a validationTable object.")
@@ -70,6 +80,10 @@ thin <- function(scanResult, reftb, X, discard_extraRange = TRUE, max_L = 1e6, s
 		#R$deme = NULL
 		#R$OK = R$true.model==R$est.model
 		class(ANALYSIS) <- "validationResult"
+		if (output_region_wise_estimates==FALSE) {
+			ANALYSIS$BFSynth = NULL
+			ANALYSIS$sweepAgeSynth = NULL
+		}
 		return(ANALYSIS)
 	} else {
 		stop("Object x is not an observedDataset or validationTable object.")
@@ -103,6 +117,7 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
 					  nBaseSNPs = integer(0))
 
     Kontigs <- c()
+	#postDistrib <- list()
     while (1) { cat(".")
         line <- which.max(v$n)
 
@@ -142,15 +157,19 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
 			subv$w <- subv$w / sum(subv$w)
 			nsnp <- nrow(subv)
 			if (nsnp==0) {
-				central_estimate = NA; IC_estimate = c(NA, NA)
+				central_estimate = NA
+				IC_estimate = c(NA, NA)
+				#postDistrib = c(postDistrib, list(NA))
 			} else {
 				central_estimate <- stat(subv$a, na.rm = do_NArm, weights = subv$w)
 				IC_estimate <- c(coef(quantreg::rq(subv$a~1, tau = c(.025, .975), weights = subv$w)))
+				#postDistrib <- c(postDistrib, list(subv$a)) # should be adjusted, ideally
 			}
 		} else {
 			nsnp <- sum(!is.na(v[c(ppLeft:ppRight),"a"]))
 			central_estimate <- stat(v[c(ppLeft:ppRight),"a"], na.rm = do_NArm)
 			IC_estimate <- quantile(v[c(ppLeft:ppRight),"a"], c(.025, .975), na.rm = do_NArm)
+			#postDistrib <- c(postDistrib, list(v[c(ppLeft:ppRight),"a"]))
 		}
 		BF <- stat_BF( v[c(ppLeft:ppRight),"w"] / v[c(ppLeft:ppRight),"w0"], na.rm = TRUE )
         ad <- c(v[c(ppLeft, ppRight),"pos"], central_estimate, IC_estimate, nsnp, BF)
@@ -160,7 +179,9 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
 		v[c(ppLeft:ppRight),c("n","w","w0","a")] <- NA
     }
 
-    if (is.null(Kontigs) || length(Kontigs)==0) return( RES )
+    if (is.null(Kontigs) || length(Kontigs)==0) { 
+	#RES$sweepAge.postDistrib <- list(); 
+	return( RES ) }
 
     Kontigs <- as.data.frame(Kontigs)
     names(Kontigs) <- c("pos_left", "pos_right", "SNP_estim", "IC_low", "IC_up", "nBaseSNPs", "BF")
@@ -201,6 +222,7 @@ findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.th
 						sweepAge.IC.low = Kontigs$IC_low,
 						sweepAge.IC.up = Kontigs$IC_up,
 						nBaseSNPs = Kontigs$nBaseSNPs))
+	#RES$sweepAge.postDistrib <- postDistrib
 	rownames(RES) <- 1:nrow(RES)
 
     return(RES)

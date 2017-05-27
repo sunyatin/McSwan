@@ -53,4 +53,5 @@ Ewing et Hermisson (2010) MSMS: a coalescent simulation program including recomb
 \seealso{
 \code{\link{combine}} to combine outputs from parallelized \code{generate_pseudoobs} calls
 }
+\keyword{internal}
 

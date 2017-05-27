@@ -7,11 +7,11 @@
 set_session(tempDir, pythonPath = "python", javaPath = "java")
 }
 \arguments{
-\item{tempDir}{path/name of a temporary directory (will be recursively created if it does not exist)}
+\item{tempDir}{path/name of a temporary directory (will be recursively created if it does not exist; if the directory already exists, its content will be overridden)}
 
-\item{pythonPath}{path to the \code{python} executable, or set "python" if python is callable as an environment variable}
+\item{pythonPath}{path to the \code{python} executable, simply give "python" if python is callable as an environment variable}
 
-\item{javaPath}{path to the \code{java} executable, or set "java" if python is callable as an environment variable}
+\item{javaPath}{path to the \code{java} executable, simply give "java" if python is callable as an environment variable}
 }
 \details{
 If python is not set as an environment variable, please see <https://docs.python.org/2/using/windows.html>, alternatively you can specify the python executable ("java.exe" for instance on Windows). Java is to be specified only if you simulate pseudo-observed datasets for the validation procedure, otherwise you can leave its default value.

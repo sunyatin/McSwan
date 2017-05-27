@@ -2,7 +2,7 @@
 % Please edit documentation in R/coalesce.R
 \name{coalesce}
 \alias{coalesce}
-\title{Coalescent simulations , given a set of parameter priors}
+\title{Coalescent simulations}
 \usage{
 coalesce(x, execute = TRUE, verbose = FALSE)
 }
@@ -17,10 +17,10 @@ coalesce(x, execute = TRUE, verbose = FALSE)
 A reference table with all simulated site frequency spectra stored in the \code{SFS} slot.
 }
 \description{
-Given a \code{referenceTable} object containing prior parameter values and a neutral demographic history, this function generates the command lines of neutral and selective models and execute them with Hudson's \emph{MS} coalescent simulator.
+Given a \code{referenceTable} object generated with \code{\link{generate_priors}}, this function performs coalescent simulations using Hudson's \emph{MS} simulator.
 }
 \details{
-Past population size rescalings are always set in reference to \code{No}. If you want to see the demographic command lines for each model before simulating, set \code{execute = FALSE} and \code{verbose = TRUE}.
+If you want to see the demographic command lines for each model before simulating, set \code{execute = FALSE} and \code{verbose = TRUE}.
 }
 \examples{
 Please refer to the vignette.

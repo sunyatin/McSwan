@@ -7,7 +7,7 @@
 print.referenceTable(X)
 }
 \arguments{
-\item{X}{a \code{referenceTable} object}
+\item{X}{a \code{referenceTable} object (generated with \code{\link{generate_priors}})}
 }
 \seealso{
 \code{\link{generate_priors}}

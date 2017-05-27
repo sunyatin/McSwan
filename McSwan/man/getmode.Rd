@@ -2,7 +2,7 @@
 % Please edit documentation in R/miscellenaous.R
 \name{getmode}
 \alias{getmode}
-\title{Calculate the mode of a univariate distribution}
+\title{Calculates the mode of a univariate distribution}
 \usage{
 getmode(x, na.rm = TRUE, ...)
 }
@@ -10,6 +10,6 @@ getmode(x, na.rm = TRUE, ...)
 \item{x}{a vector of numeric values}
 }
 \value{
-A numeric value corresponding to the mode of the interpolated empirical distribution.
+A numeric value corresponding to the mode of the empirical distribution.
 }
 

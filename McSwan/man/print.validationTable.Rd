@@ -7,7 +7,7 @@
 print.validationTable(X)
 }
 \arguments{
-\item{X}{a \code{validationTable} object}
+\item{X}{a \code{validationTable} object (generated with \code{\link{generate_pseudoobs}})}
 }
 \seealso{
 \code{\link{generate_pseudoobs}}

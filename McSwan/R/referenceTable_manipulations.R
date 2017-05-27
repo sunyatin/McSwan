@@ -8,10 +8,10 @@
 combine <- function(x, ...) UseMethod("combine")
 
 #' @title Combine referenceTable objects
-#' @description Combine two \code{referenceTable} objects prior to any dimension reduction.
-#' @param V a \code{referenceTable} object with empty \code{DIMREDUC} slot
-#' @param v a \code{referenceTable} object with empty \code{DIMREDUC} slot
-#' @return A \code{referenceTable} object combining the two incoming objects.
+#' @description Combine two \code{referenceTable} objects prior to machine learning (i.e. prior to the \code{\link{dim_reduction}} call).
+#' @param V a first \code{referenceTable} object with empty \code{DIMREDUC} slot
+#' @param v a second \code{referenceTable} object with empty \code{DIMREDUC} slot
+#' @return A \code{referenceTable} object combining the two original \code{referenceTable} objects.
 #' @seealso \code{\link{generate_priors}}, \code{\link{coalesce}}, \code{\link{dim_reduction}}
 #' @export
 combine.referenceTable <- function(V, v) {

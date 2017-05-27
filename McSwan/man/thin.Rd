@@ -2,40 +2,42 @@
 % Please edit documentation in R/thinning.R
 \name{thin}
 \alias{thin}
-\title{Merge contiguous sweeps}
+\title{Merge contiguous swept loci (tiling path inference)}
 \usage{
-thin(scanResult, reftb, X, discard_extraRange = TRUE, max_L = 1e+06,
-  signif.threshold = 0.5, maxIter = 1000, stat = getmode,
-  weighted_metaEstimate = TRUE)
+thin(scanResult, reftb, X, max_L = 1e+06, signif.threshold = 0.5,
+  maxIter = 1000, stat = getmode)
 }
 \arguments{
+\item{scanResult}{a list returned by \code{\link{gscan}}}
+
 \item{reftb}{an initialized \code{referenceTable} object}
 
-\item{x}{a dataframe returned by \code{\link{gscan}}}
+\item{X}{the observed or pseudo-observed dataset used in the \code{\link{gscan}} call}
 
-\item{bwadjust}{(numeric) bandwidth coefficient, the algorithm will extend contiguity as far as \code{bwadjust * windowSize} from any focal window}
+\item{max_L}{(integer) the "horizon distance" (in base pairs), ie. the maximum distance from any position above which loci detected as under selection cannot be assumed to be related to the same sweep region}
 
-\item{minWindows}{(integer) the minimum number of contiguous windows required to perform contiguity search}
+\item{signif.threshold}{(numeric between 0 and 1) a selection score cut-off above which we decide that a SNP is positive selected}
 
-\item{summary_stat}{(string) the central statistic to average the parameter estimates of merged contiguous windows ("mean" recommended)}
+\item{maxIter}{(integer) maximum number of iterations used for the tiling path inference}
 
-\item{plot_thinning}{(logical) plot a representation of the genomic fragment with the contiguous sweep regions}
+\item{stat}{(function) a statistic used to center the SNP-wise sweep age estimates (\code{getmode} was shown to be the least biased but you may also try \code{median} or \code{mean})}
 }
 \value{
-Returns a dataframe of the merged contiguous sweeps. One sweep per line, and in columns:
+Returns a dataframe of the estimated sweep contigs. One sweep region per line, and in columns:
 \itemize{ 
-\item \code{\bold{sweep.center}} center of the contiguous sweep region
-\item \code{\bold{sweep.lbound}} first position of the contiguous sweep region
-\item \code{\bold{sweep.rbound}} last position of the contiguous sweep region
-\item \code{\bold{BF}} aggregated Bayes Factor of the contiguous sweep region
-\item \code{\bold{deme}} population detected to have experienced a selective sweep (given as "i" & index of the population in the \emph{MS} command)
-\item \code{\bold{sweepAge}} posterior estimate for the sweep age
-\item \code{\bold{sweepAge.IC.low}} lower boundary of the 95% credible interval for the sweep age estimation
-\item \code{\bold{sweepAge.IC.up}} upper boundary of the 95% credible interval for the sweep age estimation
+\item \code{\bold{sweep.center}} the center of the sweep region contig
+\item \code{\bold{sweep.lbound}} the first position of the sweep region contig
+\item \code{\bold{sweep.rbound}} the last position of the sweep region contig
+\item \code{\bold{BF}} aggregated Bayes Factor of the sweep region contig
+\item \code{\bold{deme}} the population detected to have experienced a selective sweep (given as "\emph{i}" and the index of the population in the \emph{MS} command)
+\item \code{\bold{sweepAge}} the point estimate for the sweep age
+\item \code{\bold{sweepAge.IC.low}} lower boundary of the 95\% confidence interval for the sweep age estimation
+\item \code{\bold{sweepAge.IC.up}} upper boundary of the 95\% confidence interval for the sweep age estimation
+\item \code{\bold{sweepAge.postDistrib}} posterior distribution of the sweep age estimation
 }
 }
 \description{
-This function merges contiguous regions detected by \code{\link{gscan}} as having experienced a selective sweep.
+This function merges contiguous regions detected as having experienced a selective sweep (i.e. following a \code{\link{gscan}}).
 }
 \examples{
 Please refer to the vignette.

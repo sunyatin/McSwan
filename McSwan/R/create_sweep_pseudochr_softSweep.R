@@ -23,6 +23,7 @@
 #' 
 #' @references Ewing et Hermisson (2010) MSMS: a coalescent simulation program including recombination, demographic structure and selection at a single locus. \emph{Bioinformatics}.
 #' @seealso \code{\link{combine}} to combine outputs from parallelized \code{generate_pseudoobs} calls
+#' @keywords internal
 #' @export
 generate_pseudoobs_soft <- function(reftb, 
                                nSimul, 

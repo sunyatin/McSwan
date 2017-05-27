@@ -14,8 +14,6 @@ import random
 
 # 11 01 2017: added a -I option to synchronize PAC with simulated (now handles unsampled populations)
 
-### ATTENTION! le sorted iterkeys fait de facon alphabetique !! pas bon !!
-
 # remove monomorphic SNPs
 
 # ASSUMES _____DIPLOID_____ SAMPLES!
@@ -142,7 +140,11 @@ if os.path.isfile(fvcf) is False: sys.exit("Input file does not exist.")
 fout = open(fpac, 'w')
 fout.write('# Input VCF: '+fvcf+'\n')
 fout.write('# Chromosome: '+chrom+'\n')
-fout.write('# Min. QUAL: '+str(minQual)+'\n')
+if haploidize:
+	adi = ' ; Genotypes: haploidized'
+else:
+	adi = ' ; Genotypes: original ploidy from the VCF'
+fout.write('# Min. QUAL: '+str(minQual)+adi+'\n')
 if doFold == True:
 	fout.write('# Minor Allele Counts => folded SFS\n')
 else:

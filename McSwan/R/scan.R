@@ -1,24 +1,20 @@
 
 
-#' @title Sweep detection & sweep age estimation for a single genomic region
-#' @param target multidimensional joint site-frequency-spectra of the target genomic window
-#' @param reftb a \code{referenceTable} object, with non-empty \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements
-#' @param plot_simCloud (logical) plot the observed dataset amid the simulated ones, in the space of the retained LDA components
-#' @param verbose (logical) verbose mode
-#' @param minSNP (integer) minimum number of within-window SNPs; if the number of within-window SNPs \code{< minSNP}, the function will return \code{NA}
-#' @param tolABC (numeric or an array of 2 elements, values between 0 and 1) if a single numeric value, the tolerance ratio for both sweep detection and sweep estimation (see \code{\link{postpr}} and \code{\link{abc}}); if an array of 2 numeric elements, the first one will be the tolerance ratio for sweep detection (see \code{\link{postpr}}) and the second one for sweep estimation (see \code{\link{abc}})
-#' @param tolGFIT (numeric between 0 and 1) significance level for the goodness-of-fit test, ie. if \code{p-value(GoF) < tolGFIT}, we reject Ho: "The observed dataset falls within the null distribution of distances"; i.e. the observed dataset is not explainable by a given evolutionary model; if you want to disable the GoF test, set \code{tolGFIT = 0}
-#' @param cutoff (numeric) the Bayes Factor cut-off value above which a window is assigned to the fittest model
-#' @return A list of 4 elements:
-#' \itemize{
-#' \item \code{sweepingIsland} the population which has experienced a recent positive sweep
-#' \item \code{BayesFactor} the Bayes Factor in favour of the model
-#' \item \code{params} point estimate for (\code{sweepAge})
-#' \item \code{ic} a vector giving the lower and upper limits of the 95\% credible intervals for (\code{sweepAge}
-#' }
-#' @seealso \code{\link{gscan}} for iterating this function by sliding windows along the genome
+#' @title Ensemble genome scan for sweep detection & sweep age estimation
+#' @param X an observed dataset obtained with \code{get_SFS()} or a pseudo-observed dataset obtained with \code{generate_pseudoobs()}
+#' @param reftb a \code{referenceTable} object, with non-empty \code{PRIORS}, \code{SFS} and \code{DIMREDUC} slots
+#' @param firstPos (integer) the first position of the genome scan (NULL to automatically start at the first known position)
+#' @param lastPos (integer) the last position of the genome scan (NULL to automatically stop at the last known position)
+#' @param windowSizes (array of integers) a vector of window lengths over which genome scans will be performed iteratively, you may consider using the R function seq(minimum_length, maximum_length, length.out = number_of_values) to sample a set of equally-spaced lengths
+#' @param nSteps (integer) number of overlapping shifts (the higher the number, the more overlapping windows will be introduced, increasing the scan resolution)
+#' @param discard_extraRange (logical) if TRUE, will discard sweep age estimations going beyond the prior range (TRUE is recommended)
+#' @param minSNP (integer) minimum number of SNPs in the window to consider it valid for inference
+#' @return A list to be further processed with the \code{thin()} function.
+#' @seealso \code{\link{get_SFS}}, \code{\link{generate_pseudoobs}}, \code{\link{thin}}
 #' @export
-gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowSizes = seq(1e4, 2e5, length.out = 20), nSteps = 20, n = NULL, discard_extraRange = TRUE) {
+gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowSizes = seq(1e4, 2e5, length.out = 20), nSteps = 20, discard_extraRange = TRUE) {
+	n = NULL # if n = integer, only 1:n POD simulations per model will be gscanned
+
 	if (class(reftb)!="referenceTable") stop("reftb is not a valid referenceTable")
 	if (is.null(reftb$DIMREDUC)) stop("You have not performed the dimension reduction.")
 	if (minSNP < 1) stop("minSNP must be >= 1")
@@ -28,6 +24,7 @@ gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowS
 	cat("\n")
 
 	infer.age = TRUE
+	windowSizes = sapply(windowSizes, as.integer)
 
 	# by class
 	if (class(X)=="observedDataset") { cat("Scanning an observedDataset object.\n")

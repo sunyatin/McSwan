@@ -7,15 +7,15 @@
 \method{combine}{referenceTable}(V, v)
 }
 \arguments{
-\item{V}{a \code{referenceTable} object with empty \code{DIMREDUC} slot}
+\item{V}{a first \code{referenceTable} object with empty \code{DIMREDUC} slot}
 
-\item{v}{a \code{referenceTable} object with empty \code{DIMREDUC} slot}
+\item{v}{a second \code{referenceTable} object with empty \code{DIMREDUC} slot}
 }
 \value{
-A \code{referenceTable} object combining the two incoming objects.
+A \code{referenceTable} object combining the two original \code{referenceTable} objects.
 }
 \description{
-Combine two \code{referenceTable} objects prior to any dimension reduction.
+Combine two \code{referenceTable} objects prior to machine learning (i.e. prior to the \code{\link{dim_reduction}} call).
 }
 \seealso{
 \code{\link{generate_priors}}, \code{\link{coalesce}}, \code{\link{dim_reduction}}

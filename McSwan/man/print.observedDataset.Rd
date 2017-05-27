@@ -2,12 +2,12 @@
 % Please edit documentation in R/miscellenaous.R
 \name{print.observedDataset}
 \alias{print.observedDataset}
-\title{Print a summary of a \code{observedDataset} object content}
+\title{Print a summary of an \code{observedDataset} object content}
 \usage{
 print.observedDataset(X)
 }
 \arguments{
-\item{X}{a \code{observedDataset} object}
+\item{X}{a \code{observedDataset} object (generated with \code{\link{get_SFS}})}
 }
 \seealso{
 \code{\link{get_SFS}}

@@ -177,23 +177,23 @@ get_pls <- function(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, PL
 }
 
 
-#' @title Dimension reduction prior to approximate Bayesian computation
-#' @description Reduces the dimension of the summary statistics (joint multidimensional allele frequency spectra) prior to ABC model selection (through linear discriminant analysis) and ABC parameter estimation (through model-specific partial least square regressions). This function is to be run after \code{\link{coalesce}}.
+#' @title Supervised machine learning of the selection signals
+#' @description Performs supervised learning algorithms (LDA and PLSR) on the summary statistics (joint multidimensional allele frequency spectra) prior to genome scan. This function is to be run after \code{\link{coalesce}}.
 #' @param x a \code{referenceTable} object with non-empty \code{PRIORS} and \code{SFS} slots
 
-#' @param removeCollinearCols (logical) whether to remove collinear columns of the site frequency spectra prior to LDA & PLS dimension reduction (TRUE is recommended)
+#' @param removeCollinearCols (logical) whether to remove collinear columns from the site frequency spectra prior to LDA & PLS dimension reduction (TRUE is recommended)
 
-#' @param LDA_xPC (float between 0 and 1) number of principal components to retain (as a fraction of the number of cells in the SFS) to do subsequent LDA
-#' @param LDA_sizePerModel (integer) number of simulations per model to consider for training the PCA-LDA; \emph{NULL} (by default) forces to use all data
+#' @param LDA_xPC (float between 0 and 1) number of principal components to retain as a fraction of the original number of cells in the SFS; LDA will be trained on the PCA-projected simulations
+#' @param LDA_sizePerModel (integer) number of simulations per model to consider for training the LDA; \emph{NULL} (by default) forces to use all data
 
 #' @param PLS_normalize (logical) whether to normalize the spectra prior to PLS analysis (TRUE is recommended)
 #' @param PLS_ncomp (integer) if NULL, automatically select the fittest number of PLS components, else an integer to manually set the number of retained components
-#' @param PLS_maxncomp (integer) maximum number of PLS components to calculate before selecting the best set of features
-#' @param PLS_ncomp_method (string) method to automatically select the best number of features: either "\emph{elbow}", "\emph{onesigma}" or "\emph{randomization}" (cf. \code{selectNcomp} in package \code{pls})
-#' @param plot_PLScv (logical) if TRUE, will render the cross-validation graphs of the PLS
+#' @param PLS_maxncomp (integer) if automatic selection of PLS features, the maximum number of PLS components to consider before downsampling to the fittest set
+#' @param PLS_ncomp_method (string) the method to automatically select the best number of features: either "\emph{elbow}", "\emph{onesigma}" or "\emph{randomization}" (cf. \code{selectNcomp} in package \code{pls})
+#' @param plot_PLScv (logical) if TRUE, plots the PLS cross-validation graphs
 
 #' @return An object of class \code{referenceTable} with filled-in \code{DIMREDUC} slot.
-#' @seealso \code{\link{coalesce}}, \code{\link{plsr}}, \code{\link{lda}}, \code{\link{abc}}
+#' @seealso \code{\link{coalesce}}, \code{\link{plsr}}, \code{\link{lda}}
 #' @examples Please refer to the vignette.
 #' @import Matrix
 #' @export

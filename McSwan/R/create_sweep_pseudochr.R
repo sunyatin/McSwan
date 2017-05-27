@@ -4,15 +4,14 @@
 #' @param reftb an initialized \emph{referenceTable} object
 #' @param nSimul (integer) number of independent genomic fragments to simulate for each evolutionary model
 #' @param L (integer) genomic fragment length (in base pairs) (should be significantly higher than the \code{windowSize} so that McSwan can perform a sliding-window scan)
-#' @param sweepAge (special list) prior distribution for the sweep ages (scaled in generations before present) (if \code{NULL} and the number of demes is superior to 2, the prior distribution will be automatically determined, otherwise it is mandatory to specify the distribution manually, see \link{Details})
+#' @param sweepAge (special list) prior distribution for the sweep ages (scaled in generations before present) (if \code{NULL} and the number of demes is superior to 2, the prior distribution will be automatically determined, otherwise it is mandatory to specify the distribution manually, see \code{Details})
 #' @param recRate (special list) prior distribution for the recombination rates (see \code{Details})
 #' @param sweepPos (numeric) relative position of the beneficial mutation (eg. for \eqn{sweepPos=0.5}, the beneficial mutation will be located at the center of the genomic region)
-#' @param nReps (integer) number of replicates to simulate per parameter combination (by default \code{nReps=1}, but you can increase this value to reduce the stochasticity of the coalescent process, the function will automatically average the coalescent-generated site frequency spectra)
 #' @param verbose (logical) verbose mode
-#' @param doSFS (logical) whether to compute the joint site frequency spectra associated to the genomic fragments (TRUE recommended)
-#' @param Smu forward mutation rate for the advantageous allele (per base per generation) of the beneficial allele; if \code{NULL} this rate will be equal to the mean mutation rate \eqn{\mu} used in \eqn{\theta}
+#' @param Smu forward mutation rate for the advantageous allele (per base per generation); if \code{NULL} this rate will be equal to the mean mutation rate \eqn{\mu}
 #' @param sweepingIsl (array of integers) by default, McSwan will generate fragments under all population-specific sweep models; if you want to restrict the simulations of sweep models to some given populations, provide the population \bold{indices} in a vector; note that population indices correspond to their position under the \code{-I} switch of the \code{MS} command, and note that the index of the first population is \bold{1}
-#' @param default_sweepAge_prior_func if \code{sweepAge = NULL} you can force here the prior distribution of the sweep ages (e.g. "runif" or "rlogunif"), however the distribution limits will still be automatically set
+#' @param default_sweepAge_prior_func if \code{sweepAge = NULL} you can force here the prior distribution of the sweep ages (e.g. "runif" or "rlogunif"), however the range of the distribution will still be set automatically
+#' @param sAA the selection coefficient of the individual homozygote for the beneficial allele, see MSMS manual.
 #' @return An object of class \code{validationTable} containing positional allele counts in the \code{SFS} slot.
 #'  
 #' @details Prior distributions must be specified using the following syntax: \code{list("P", arg1, arg2)} with \emph{P} the name of the distribution function (e.g. \code{\link{runif}} for the uniform distribution, \code{\link{rlogunif}} for the log-uniform; please make sure you have quoted the function name and removed the argument brackets); \emph{arg1} and \emph{arg2} respectively the first and second arguments of the function (e.g. for \code{runif} will be the lower and upper limits of the distribution). Note that the log-uniform distribution will tend to favour the sampling of very recent sweeps.
@@ -21,8 +20,7 @@
 #' \item specify a list of distribution-sublists, each distribution-sublist corresponding to the sweep age distribution for the specific deme(s) you provided in the \code{sweepingIsl} argument (indexed as they appear in the \code{ms} command) (if \code{sweepingIsl = NULL} you will need to provide the distribution-sublists for \bold{all} demes); for instance, for \code{sweepingIsl = c(1,2)}, one would specify: \code{list(list("rlogunif", T_1, TT_1), list("runif", T_2, TT_2))}.
 #' }
 #' 
-#' @references Ewing et Hermisson (2010) MSMS: a coalescent simulation program including recombination, demographic structure and selection at a single locus. \emph{Bioinformatics}.
-#' @seealso \code{\link{combine}} to combine outputs from parallelized \code{generate_pseudoobs} calls
+#' @references Ewing et Hermisson (2010) MSMS: a coalescent simulation program including recombination, demographic structure and selection at a single locus. \emph{Bioinformatics}
 #' @export
 generate_pseudoobs <- function(reftb, 
                                nSimul, 
@@ -33,13 +31,13 @@ generate_pseudoobs <- function(reftb,
                                sweepPos = .5,
                                Smu = NULL, 
 							   sAA = 1,
-                               nReps = 1, 
-                               verbose = FALSE, 
-                               doSFS = TRUE,
+                               verbose = FALSE,
                                default_sweepAge_prior_func = "runif") {
 
 	# internally set options
 	save_each_file = FALSE
+	nReps = 1
+	doSFS = TRUE
 	#sAA <- 1
   
 if (is.null(L)) stop("L must not be NULL")
