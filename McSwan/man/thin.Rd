@@ -16,7 +16,7 @@ thin(scanResult, reftb, X, max_L = 1e+06, signif.threshold = 0.5,
 
 \item{max_L}{(integer) the "horizon distance" (in base pairs), ie. the maximum distance from any position above which loci detected as under selection cannot be assumed to be related to the same sweep region}
 
-\item{signif.threshold}{(numeric between 0 and 1) a selection score cut-off above which we decide that a SNP is positive selected}
+\item{signif.threshold}{(single or vector of numeric values) (between 0 and 1) a selection score cut-off above which we decide that a SNP is positive selected; if unique value, this cutoff will be used for all populations; alternatively, you can give a vector of cutoff values which will be specifically used for each population (e.g. signif.threshold=c(0.5, 0.2))}
 
 \item{maxIter}{(integer) maximum number of iterations used for the tiling path inference}
 

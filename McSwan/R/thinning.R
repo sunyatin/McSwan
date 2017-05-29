@@ -5,7 +5,7 @@
 #' @param reftb an initialized \code{referenceTable} object
 #' @param X the observed or pseudo-observed dataset used in the \code{\link{gscan}} call
 #' @param max_L (integer) the "horizon distance" (in base pairs), ie. the maximum distance from any position above which loci detected as under selection cannot be assumed to be related to the same sweep region
-#' @param signif.threshold (numeric between 0 and 1) a selection score cut-off above which we decide that a SNP is positive selected
+#' @param signif.threshold (single or vector of numeric values) (between 0 and 1) a selection score cut-off above which we decide that a SNP is positive selected; if unique value, this cutoff will be used for all populations; alternatively, you can give a vector of cutoff values which will be specifically used for each population (e.g. signif.threshold=c(0.5, 0.2))
 #' @param maxIter (integer) maximum number of iterations used for the tiling path inference
 #' @param stat (function) a statistic used to center the SNP-wise sweep age estimates (\code{getmode} was shown to be the least biased but you may also try \code{median} or \code{mean})
 #' @return Returns a dataframe of the estimated sweep contigs. One sweep region per line, and in columns:
