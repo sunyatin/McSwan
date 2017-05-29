@@ -4,7 +4,7 @@ Title: Multiple-collision Coalescent SWeep ANalyser
 Version: 1.1.1
 Date: 2017-05-25
 Author: Remi Tournebize
-Maintainer: Remi Tournebize <remi.tournebize (at) ird (dot) fr>
+Maintainer: Remi Tournebize <remi.tournebize@ird.fr>
 Description: The Multiple-collision Coalescent SWeep ANalyser (McSwan) is a genome scan approach which aims at simultaneously detecting and dating hard selective sweeps from genome sequence data of multiple individuals from (possibly) multiple populations.
 License: GPL (>= 2)
 Imports:
