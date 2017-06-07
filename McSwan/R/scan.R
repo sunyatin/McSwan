@@ -86,7 +86,7 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
         colnames(EST.AGE) <- names(reftb$DIMREDUC$PLS)
     }
     WEIGHTS = STABILITY
-	if (discard_extraRange == TRUE) PARAM.WEIGHTS = WEIGHTS[,-1]
+	if (discard_extraRange == TRUE) PARAM.WEIGHTS = WEIGHTS[,-1, drop=FALSE] # added drop=FALSE on June 7th 2017 otherwise error with single deme
 	N.TESTS = rep(0, length(POS))
 	isFolded = (reftb$GENERAL$folded)
 
@@ -183,7 +183,8 @@ scan_core = function(reftb, POS, PAC, wSNP, firstPos, lastPos, minSNP, windowSiz
 		if (discard_extraRange) {
 			EST.AGE = EST.AGE / PARAM.WEIGHTS
 		} else {
-			EST.AGE = EST.AGE / WEIGHTS[,-1] # must be done before averaging the WEIGHTS
+			EST.AGE = EST.AGE / WEIGHTS[,-1, drop=F] # must be done before averaging the WEIGHTS
+			# added drop=F on June 7th
 		}
 	}
     STABILITY = sweep(STABILITY, MARGIN = 1, FUN = "/", STATS = N.TESTS)
