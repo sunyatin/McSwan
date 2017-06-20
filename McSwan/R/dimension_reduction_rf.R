@@ -36,7 +36,7 @@ dim_reduction_rf <- function(x,
                           PLS_ncomp = NULL,
 						  PLS_ncomp_method = "elbow",
                           PLS_maxncomp = 100,
-                          PLS_plotCV = TRUE
+                          PLS_plotCV = TRUE,
 						##> "rf" == random forests
 						  RF_ntree = 500,
 						  RF_pcomp = 1, # proportion of retained features (with best importance score)
