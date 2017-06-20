@@ -1,6 +1,6 @@
 
 
-#' @title Supervised machine learning of the selection signals
+#' @title LDA & RF supervised machine learning of the selection signals
 #' @description Performs supervised learning algorithms (LDA and random forests) on the summary statistics (joint multidimensional allele frequency spectra) prior to genome scan. This function is to be run after \code{\link{coalesce}}.
 #' @param x a \code{referenceTable} object with non-empty \code{PRIORS} and \code{SFS} slots
 
@@ -21,7 +21,7 @@
 #' @seealso \code{\link{coalesce}}, \code{\link{plsr}}, \code{\link{lda}}
 #' @examples Please refer to the vignette.
 #' @import Matrix
-#' @keywords internal
+#' @export
 dim_reduction_rf <- function(x,
 						# REFTB PRE-PROCESSING
                           removeCollinearCols = TRUE,
