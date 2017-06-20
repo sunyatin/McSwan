@@ -16,6 +16,7 @@ Imports:
 	abc (>= 2.1),
 	pls (>= 2.6-0),
 	Matrix (>= 1.2),
+	randomForest (>= 4.6),
 	reshape2 (>= 1.4.1),
 	roxygen2 (>= 5.0.1),
 	quantreg (>= 5.29),
