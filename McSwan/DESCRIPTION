@@ -1,23 +1,26 @@
 Package: McSwan
 Type: Package
-Title: Selective sweep detection and estimation of time since fixation.
-Version: 1.0
-Date: 2016-07-12
+Title: Multiple-collision Coalescent SWeep ANalyser
+Version: 1.1.1
+Date: 2017-05-25
 Author: Remi Tournebize
-Maintainer: Remi Tournebize <remi.tournebize@gmail.com>
-Description: McSwan is a R package to infer the extent and the dynamics of natural selection in the genomes of single or multiple populations.  
+Maintainer: Remi Tournebize <remi.tournebize@ird.fr>
+Description: The Multiple-collision Coalescent SWeep ANalyser (McSwan) is a genome scan approach which aims at simultaneously detecting and dating hard selective sweeps from genome sequence data of multiple individuals from (possibly) multiple populations.
 License: GPL (>= 2)
 Imports:
 	Rcpp (>= 0.12.5),
 	phyclust (>= 0.1-16),
-	MASS (>= 7.3-45),
+	MASS (>= 7.3),
 	caret (>= 6.0-70),
 	ggplot2 (>= 2.1.0),
 	abc (>= 2.1),
-	pls (>= 2.5-0),
+	pls (>= 2.6-0),
+	Matrix (>= 1.2),
+	randomForest (>= 4.6),
 	reshape2 (>= 1.4.1),
 	roxygen2 (>= 5.0.1),
-	RColorBrewer (>= 1.1-2)
+	quantreg (>= 5.29),
+	RColorBrewer (>= 1.1)
 LinkingTo: Rcpp
 LazyData: TRUE
 RoxygenNote: 5.0.1

@@ -2,8 +2,9 @@
 % Please edit documentation in R/miscellenaous.R
 \name{discr}
 \alias{discr}
-\title{Sampling}
+\title{Sample n classes}
 \usage{
 discr(n, classes)
 }
+\keyword{internal}
 

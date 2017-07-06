@@ -4,8 +4,8 @@
 \alias{get_pls}
 \title{Get model-specific PLS components}
 \usage{
-get_pls(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp, plot_PLScv,
-  maxPLSncomp = 100, deme, QR_multicollinearity = T)
+get_pls(param, ss, PLS_normalize, removeCollinearCols, PLS_ncomp,
+  PLS_ncomp_method = "elbow", plot_PLScv = FALSE, maxPLSncomp = 100, deme)
 }
 \arguments{
 \item{PLS_ncomp}{if NULL, automatically select the fittest number of PLS components, else an integer to set the number of components to a specific value}

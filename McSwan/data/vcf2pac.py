@@ -4,6 +4,7 @@ __email__ = "remi.tournebize at gmail dot com"
 import argparse
 import os
 import sys
+import random
 
 ## NOTA BENE (14042016):
 # any SNP with at least one missing genotype is SKIPPED
@@ -12,8 +13,6 @@ import sys
 # now handles SPECTRUM FOLDING
 
 # 11 01 2017: added a -I option to synchronize PAC with simulated (now handles unsampled populations)
-
-### ATTENTION! le sorted iterkeys fait de facon alphabetique !! pas bon !!
 
 # remove monomorphic SNPs
 
@@ -38,6 +37,8 @@ parser.add_argument("-chr", '--chrom', type=str, required=True, action='store',
          help='chromosome to analyse (must match the name in VCF)')
 parser.add_argument("-fold", action='store_true',
          help='add this switch if you want to fold the multidimensional joint site-frequency-spectrum')
+parser.add_argument("-haploidize", action='store_true',
+         help='add this switch if you want to haploidize the samples (useful to mitigate impact of low-coverage sequencing)')
 parser.add_argument("-minQ", '--minQual', type=float, default=10.0, action='store',
          help='SNPs with QUAL < minQual will be skipped')
 
@@ -50,6 +51,7 @@ chrom = args.chrom
 minQual = args.minQual
 doFold = args.fold
 nIsl = args.islands
+haploidize = args.haploidize
 
 # prompt to user
 print "> Input file: "+str(fvcf)
@@ -60,6 +62,8 @@ if doFold==False:
 	print "> SFS type: Unfolded"
 else:
 	print "> SFS type: Folded"
+if haploidize:
+	print "> Samples are haploidized (by randomly drawing a single allele)"
 #print "Populations: "+str(pop_sample_names)
 
 ####################################################################
@@ -67,7 +71,7 @@ else:
 ####################################################################
 # SCRIPT
 
-def get_ind_AC(GT):
+def get_ind_AC(GT, asHaplo):
 	# GT always first subfield in sample_data (VCF format 4.0)
 	
 	#GT = ind.split(':')[0]
@@ -82,7 +86,10 @@ def get_ind_AC(GT):
 	if GT[0] == '.':
 		return -1
 	else:
-		return int(GT[0])+int(GT[2])
+		if asHaplo == True:
+			return int(random.choice([GT[0], GT[2]]))
+		else:
+			return int(GT[0])+int(GT[2])
 
 def fold(AC, pop_n_gametes, threshold):
 	sAC = sum(AC)
@@ -133,7 +140,11 @@ if os.path.isfile(fvcf) is False: sys.exit("Input file does not exist.")
 fout = open(fpac, 'w')
 fout.write('# Input VCF: '+fvcf+'\n')
 fout.write('# Chromosome: '+chrom+'\n')
-fout.write('# Min. QUAL: '+str(minQual)+'\n')
+if haploidize:
+	adi = ' ; Genotypes: haploidized'
+else:
+	adi = ' ; Genotypes: original ploidy from the VCF'
+fout.write('# Min. QUAL: '+str(minQual)+adi+'\n')
 if doFold == True:
 	fout.write('# Minor Allele Counts => folded SFS\n')
 else:
@@ -158,7 +169,7 @@ with open(fvcf, 'r') as f:
 				if len(linarr[3]) == 1 and len(linarr[4]) == 1 and float(linarr[5]) >= minQual:
 					pac = [0]*nIsl
 					for p in range(len(pop_sample_idx)):
-						ac = [get_ind_AC(x) for x in [linarr[x] for x in pop_sample_idx[p]]]
+						ac = [get_ind_AC(x, haploidize) for x in [linarr[x] for x in pop_sample_idx[p]]]
 						if -1 in ac:
 							continue
 						sum_ac = sum(ac)

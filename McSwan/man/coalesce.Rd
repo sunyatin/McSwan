@@ -2,23 +2,33 @@
 % Please edit documentation in R/coalesce.R
 \name{coalesce}
 \alias{coalesce}
-\title{Performs multicoalescence SIMPLE PARTITION WITHOUT MIGRATION, given a set of parameter priors}
+\title{Coalescent simulations}
 \usage{
-coalesce(x, method = "partition", nRep = 1, SAA = 1, execute = TRUE,
-  phyclust = TRUE, verbose = FALSE)
+coalesce(x, execute = TRUE, verbose = FALSE)
 }
 \arguments{
-\item{x}{an initialized reference table (class \emph{referenceTable}).}
+\item{x}{an initialized \code{referenceTable} object}
 
-\item{nRep}{(optional) number of repetitions to approximate the sweep (default 100)}
+\item{execute}{(logical) whether to execute the simulations}
+
+\item{verbose}{(logical) verbose mode}
 }
 \value{
-A reference table with all simulated site frequency spectra.
+A reference table with all simulated site frequency spectra stored in the \code{SFS} slot.
 }
 \description{
-NA
+Given a \code{referenceTable} object generated with \code{\link{generate_priors}}, this function performs coalescent simulations using Hudson's \emph{MS} simulator.
 }
 \details{
-Past resizings are always set in reference to  \emph{No}.
+If you want to see the demographic command lines for each model before simulating, set \code{execute = FALSE} and \code{verbose = TRUE}.
+}
+\examples{
+Please refer to the vignette.
+}
+\references{
+Hudson, R.R. (2002). Generating samples under a Wright-Fisher neutral model of genetic variation. Bioinformatics, 18, 337-338.
+}
+\seealso{
+\code{\link{generate_priors}}, \code{\link{dim_reduction}}
 }
 

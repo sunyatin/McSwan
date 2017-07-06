@@ -2,8 +2,14 @@
 % Please edit documentation in R/miscellenaous.R
 \name{getmode}
 \alias{getmode}
-\title{Get mode}
+\title{Calculates the mode of a univariate distribution}
 \usage{
-getmode(x, na.rm = TRUE)
+getmode(x, na.rm = TRUE, ...)
+}
+\arguments{
+\item{x}{a vector of numeric values}
+}
+\value{
+A numeric value corresponding to the mode of the empirical distribution.
 }
 

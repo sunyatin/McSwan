@@ -2,7 +2,7 @@
 % Please edit documentation in R/coalesce.R
 \name{get_events}
 \alias{get_events}
-\title{Extract all demographic events before an event time-scaled age and involving some specific island}
+\title{Extract all demographic events involving a given island, before an event time-scaled age}
 \usage{
 get_events(ms, islandIndex, eventAge)
 }
@@ -11,14 +11,13 @@ get_events(ms, islandIndex, eventAge)
 
 \item{islandIndex}{the index of the focal island}
 
-\item{eventAge}{the age of the event, scaled in 4No}
+\item{eventAge}{the age of the event, scaled in units of 4No}
 }
 \value{
-a string of ms-formatted history events affecting the twin subisland
-#@export
+a string of ms-formatted history events affecting the twinned/duplicated focal island
 }
 \description{
-does not handle -es -eM -eG -eN -N -M -ema
+does not handle -es -eM -eG -eN -N -M -ema / this internal function is only called if method=="partition" or method=="nMigrants" at \code{coalesce()}
 }
 \keyword{internal}
 

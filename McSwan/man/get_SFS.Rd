@@ -2,8 +2,25 @@
 % Please edit documentation in R/observed_manipulations.R
 \name{get_SFS}
 \alias{get_SFS}
-\title{import the observed dataset}
+\title{Import a file of per-population per-SNP allele counts}
 \usage{
-get_SFS(inputFile, ms)
+get_SFS(inputFile, reftb)
+}
+\arguments{
+\item{inputFile}{a file of per-population per-SNP allele counts, previously generated with \code{\link{convert_VCF}}}
+
+\item{reftb}{an initialized \code{referenceTable} object}
+}
+\value{
+Returns a list object of class \code{observedDataset}, containing three elements:\itemize{\item \code{template} the template of the joint allele frequency spectra \item \code{obsData} a dataframe of SNP positions and allele counts \item \code{folded} whether those are minor (\code{TRUE}) or  derived (\code{FALSE}) allele counts }
+}
+\details{
+The function needs the \emph{MS}-formatted demographic model contained in the \code{referenceTable} object to generate the template of the joint allele frequency spectra.
+}
+\examples{
+Please refer to the vignette.
+}
+\seealso{
+\code{\link{convert_VCF}}
 }
 

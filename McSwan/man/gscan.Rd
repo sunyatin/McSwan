@@ -2,43 +2,33 @@
 % Please edit documentation in R/scan.R
 \name{gscan}
 \alias{gscan}
-\title{Performs a genome scan, by detecting sweeps along sliding windows and estimating sweep ages}
+\title{Ensemble genome scan for sweep detection & sweep age estimation}
 \usage{
-gscan(X, reftb, minSNP, startPos = NULL, lastPos = NULL,
-  windowSlide = NULL, printProgress = T, ...)
+gscan(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10,
+  windowSizes = seq(10000, 2e+05, length.out = 20), nSteps = 20,
+  discard_extraRange = TRUE)
 }
 \arguments{
-\item{X}{either an object with class \emph{observedDataset} produced by \code{get_SFS()} or with class \emph{validationTable}}
+\item{X}{an observed dataset obtained with \code{get_SFS()} or a pseudo-observed dataset obtained with \code{generate_pseudoobs()}}
 
-\item{reftb}{a \emph{referenceTable} object, with activated \code{PRIORS}, \code{SFS} and \code{DIMREDUC} elements}
+\item{reftb}{a \code{referenceTable} object, with non-empty \code{PRIORS}, \code{SFS} and \code{DIMREDUC} slots}
 
-\item{startPos}{(integer) the starting position of the genome scan}
+\item{firstPos}{(integer) the first position of the genome scan (NULL to automatically start at the first known position)}
 
-\item{lastPos}{(integer) the ending position of the genome scan}
+\item{lastPos}{(integer) the last position of the genome scan (NULL to automatically stop at the last known position)}
 
-\item{windowSlide}{(integer) the sliding gap, if \code{NULL} then \emph{windowSlide} will be automatically set as equal the window size (therefore windows will not overlap)}
+\item{minSNP}{(integer) minimum number of SNPs in the window to consider it valid for inference}
 
-\item{...}{other arguments passed to \code{\link{analyze}}}
+\item{windowSizes}{(array of integers) a vector of window lengths over which genome scans will be performed iteratively, you may consider using the R function seq(minimum_length, maximum_length, length.out = number_of_values) to sample a set of equally-spaced lengths}
+
+\item{nSteps}{(integer) number of overlapping shifts (the higher the number, the more overlapping windows will be introduced, increasing the scan resolution)}
+
+\item{discard_extraRange}{(logical) if TRUE, will discard sweep age estimations going beyond the prior range (TRUE is recommended)}
 }
 \value{
-A dataframe with each row corresponding to one window and with the following columns: \itemize{
-\item \code{start.pos} the starting position of the window
-\item \code{end.pos} the ending position of the window
-\item \code{deme.under.sel} the deme which has been detected to have undergone recent positive sweep 
-\item \code{BayesFactor} the Bayes Factor for the sweep model of the sweeping deme (ie. \code{deme.under.sel})
-\item \code{sweepAge} the point estimate of the sweep age
-\item \code{recRate} the point estimate of the recombination rate between adjacent bases
-\item \code{sweepAge.IC.low} the lower bound of the 95\% credible interval for the sweep age estimation
-\item \code{sweepAge.IC.up} the upper bound of the 95\% credible interval for the sweep age estimation
-\item \code{recRate.IC.low} the lower bound of the 95\% credible interval for the recombination rate estimation
-\item \code{recRate.IC.up} the upper bound of the 95\% credible interval for the recombination rate estimation
-\item \code{failure} if the sweep detection has failed, specifies the reason: either because the window failed the requirement for a minimum number of SNPs (\code{minSNP}); failed the goodness-of-fit test (\code{goodnessOfFit}); failed the ABC estimation because of zero variance in the LDA/PLS components for instance (\code{ABC}); failed the discriminability between equally likely models (\code{modelDiscrimination}).
-}
-}
-\description{
-This function performs a genome scan along sliding windows, for each window it estimates the Bayes Factor of the most likely sweep model in a specific deme \emph{vs.} the neutral model. If a sweep is detected, it carries on estimating the age of the sweep.
+A list to be further processed with the \code{thin()} function.
 }
 \seealso{
-\code{\link{thin}}, \code{\link{get_SFS}}
+\code{\link{get_SFS}}, \code{\link{generate_pseudoobs}}, \code{\link{thin}}
 }
 

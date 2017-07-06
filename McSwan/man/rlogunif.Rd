@@ -2,8 +2,24 @@
 % Please edit documentation in R/miscellenaous.R
 \name{rlogunif}
 \alias{rlogunif}
-\title{Random log-uniform distribution}
+\title{Generates log10-uniform distributions}
 \usage{
 rlogunif(n, a, b)
+}
+\arguments{
+\item{n}{number of values to sample}
+
+\item{a}{lower limit of the distribution}
+
+\item{b}{upper limit of the distribution}
+}
+\value{
+A vector of \emph{n} values drawn from a log10-uniform distribution.
+}
+\description{
+This function samples values out of a log10-uniform distribution.
+}
+\details{
+\code{Y} follows a log10-uniform distribution <=> \code{Y=10^(x)} where \code{x} follows a uniform distribution between \code{log10(a)} and \code{log10(b)}.
 }
 

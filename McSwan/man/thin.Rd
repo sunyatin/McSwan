@@ -2,10 +2,47 @@
 % Please edit documentation in R/thinning.R
 \name{thin}
 \alias{thin}
-\title{new thinning}
+\title{Merge contiguous swept loci (tiling path inference)}
 \usage{
-thin(x, reftb, method = "contig", stat = "mean", bwadjust = 1,
-  minWindows = 1, plot_thinning = F, epsilon = 1e-15,
-  summary_stat = "mean", obs)
+thin(scanResult, reftb, X, max_L = 1e+06, signif.threshold = 0.5,
+  maxIter = 1000, stat = getmode)
+}
+\arguments{
+\item{scanResult}{a list returned by \code{\link{gscan}}}
+
+\item{reftb}{an initialized \code{referenceTable} object}
+
+\item{X}{the observed or pseudo-observed dataset used in the \code{\link{gscan}} call}
+
+\item{max_L}{(integer) the "horizon distance" (in base pairs), ie. the maximum distance from any position above which loci detected as under selection cannot be assumed to be related to the same sweep region}
+
+\item{signif.threshold}{(single or vector of numeric values) (between 0 and 1) a selection score cut-off above which we decide that a SNP is positive selected; if unique value, this cutoff will be used for all populations; alternatively, you can give a vector of cutoff values which will be specifically used for each population (e.g. signif.threshold=c(0.5, 0.2))}
+
+\item{maxIter}{(integer) maximum number of iterations used for the tiling path inference}
+
+\item{stat}{(function) a statistic used to center the SNP-wise sweep age estimates (\code{getmode} was shown to be the least biased but you may also try \code{median} or \code{mean})}
+}
+\value{
+Returns a dataframe of the estimated sweep contigs. One sweep region per line, and in columns:
+\itemize{ 
+\item \code{\bold{sweep.center}} the center of the sweep region contig
+\item \code{\bold{sweep.lbound}} the first position of the sweep region contig
+\item \code{\bold{sweep.rbound}} the last position of the sweep region contig
+\item \code{\bold{BF}} aggregated Bayes Factor of the sweep region contig
+\item \code{\bold{deme}} the population detected to have experienced a selective sweep (given as "\emph{i}" and the index of the population in the \emph{MS} command)
+\item \code{\bold{sweepAge}} the point estimate for the sweep age
+\item \code{\bold{sweepAge.IC.low}} lower boundary of the 95\% confidence interval for the sweep age estimation
+\item \code{\bold{sweepAge.IC.up}} upper boundary of the 95\% confidence interval for the sweep age estimation
+\item \code{\bold{sweepAge.postDistrib}} posterior distribution of the sweep age estimation
+}
+}
+\description{
+This function merges contiguous regions detected as having experienced a selective sweep (i.e. following a \code{\link{gscan}}).
+}
+\examples{
+Please refer to the vignette.
+}
+\seealso{
+\code{\link{gscan}}
 }
 

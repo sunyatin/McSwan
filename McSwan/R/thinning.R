@@ -1,260 +1,230 @@
-#thinning.R
 
-#' @title new thinning
+#' @title Merge contiguous swept loci (tiling path inference)
+#' @description This function merges contiguous regions detected as having experienced a selective sweep (i.e. following a \code{\link{gscan}}).
+#' @param scanResult a list returned by \code{\link{gscan}}
+#' @param reftb an initialized \code{referenceTable} object
+#' @param X the observed or pseudo-observed dataset used in the \code{\link{gscan}} call
+#' @param max_L (integer) the "horizon distance" (in base pairs), ie. the maximum distance from any position above which loci detected as under selection cannot be assumed to be related to the same sweep region
+#' @param signif.threshold (single or vector of numeric values) (between 0 and 1) a selection score cut-off above which we decide that a SNP is positive selected; if unique value, this cutoff will be used for all populations; alternatively, you can give a vector of cutoff values which will be specifically used for each population (e.g. signif.threshold=c(0.5, 0.2))
+#' @param maxIter (integer) maximum number of iterations used for the tiling path inference
+#' @param stat (function) a statistic used to center the SNP-wise sweep age estimates (\code{getmode} was shown to be the least biased but you may also try \code{median} or \code{mean})
+#' @return Returns a dataframe of the estimated sweep contigs. One sweep region per line, and in columns:
+#' \itemize{ 
+#' \item \code{\bold{sweep.center}} the center of the sweep region contig
+#' \item \code{\bold{sweep.lbound}} the first position of the sweep region contig
+#' \item \code{\bold{sweep.rbound}} the last position of the sweep region contig
+#' \item \code{\bold{BF}} aggregated Bayes Factor of the sweep region contig
+#' \item \code{\bold{deme}} the population detected to have experienced a selective sweep (given as "\emph{i}" and the index of the population in the \emph{MS} command)
+#' \item \code{\bold{sweepAge}} the point estimate for the sweep age
+#' \item \code{\bold{sweepAge.IC.low}} lower boundary of the 95\% confidence interval for the sweep age estimation
+#' \item \code{\bold{sweepAge.IC.up}} upper boundary of the 95\% confidence interval for the sweep age estimation
+#' \item \code{\bold{sweepAge.postDistrib}} posterior distribution of the sweep age estimation
+#' }
+#' @seealso \code{\link{gscan}}
 #' @export
-thin <- function(x, reftb, method = "contig", stat = "mean", bwadjust = 1, minWindows = 1, plot_thinning = F, epsilon = 1e-15, summary_stat = "mean", obs) {
-  print("thinnin'")
-  
-  Y <- thin_SIMPLEGOOD(x, reftb, method = "contig", stat = "mean", bwadjust = bwadjust, minWindows = minWindows, plot_thinning = plot_thinning, epsilon = epsilon, summary_stat = "mean")
-  
-  return(Y)
-  
-  #Y <<- Y
-  #obs <<- obs
-  
-  template <- obs$template
-  PAC <- obs$obsData
-  
-  H <- Y$estimation
-  if (is.null(H) || nrow(H)==0) return(Y)
-  for (r in 1:nrow(H)) {
-    # get local observed SFS
-    oSFS <- template
-    localPAC <- subset(PAC, POS >= H[r,"sweep.lbound"] & POS < H[r,"sweep.rbound"]) # < only
-    tmp <- table(subset(localPAC, nSNP == 1)$PAC)
-    oSFS[names(tmp)] <- tmp
-    tmp <- table(subset(localPAC, nSNP == .5)$PAC)
-    oSFS[names(tmp)] <- oSFS[names(tmp)] + tmp / 2
-    
-    deme <- as.character(H[r,"deme"])
-    
-    lb <- t(apply(reftb$PRIORS[[deme]], 2, range))
-    ss <- reftb$DIMREDUC$PLS[[deme]]$scores
-    tproj <- project_target(reftb, oSFS, method="PLS", focalIsland = deme)
-    colnames(ss) <- colnames(tproj) <- 1:ncol(ss)
-    
-    par <- reftb$PRIORS[[deme]]
-    
-    aa <- suppressWarnings(abc::abc(target = tproj,
-                                param = par,
-                                sumstat = ss,
-                                tol = .005,
-                                method = "loclinear",
-                                hcorr = TRUE,
-                                transf = "logit",
-                                logit.bounds = lb))
-    
-    H[r,"sweepAge"] <- getmode(aa$adj.values[,1])
-    H[r,"sweepAge.IC.low"] <- quantile(aa$adj.values[,1], .025, na.rm=T)
-    H[r,"sweepAge.IC.up"] <- quantile(aa$adj.values[,1], .975, na.rm=T)
-  }
-  Y$estimation <- H
-  
-  return(Y)
+#' @examples Please refer to the vignette.
+thin <- function(scanResult, reftb, X, max_L = 1e6, signif.threshold = .5, maxIter = 1000, stat = getmode) {
+	output_region_wise_estimates = FALSE
+	discard_extraRange = TRUE
+	weighted_metaEstimate = TRUE
+
+	if (weighted_metaEstimate) cat("Meta-estimates are weighted by the SNP-wise posterior probability of sweep model.\n")
+	if (length(signif.threshold)>1) {
+		names(signif.threshold) = paste0("i",seq_along(signif.threshold))
+		cat("Multiple significance thresholds:",signif.threshold,"\n")
+	}
+	if (length(signif.threshold)==1) cat("Single significance threshold.\n")
+
+	if (class(X)=="observedDataset") {
+		if (any(sapply(scanResult[[1]], is.list))) stop("scanResult must be a result obtained from an observedDataset object.")
+		R <- c()
+		demes4contig = levels(reftb$DIMREDUC$LDA$modelIndices); demes4contig = demes4contig[demes4contig!="i0"]
+		for (dd in seq_along(demes4contig)) {
+			ddeme <- demes4contig[dd]
+			cat("\n==========================",ddeme,"==========================\n")
+			sth = ifelse(length(signif.threshold)==1, signif.threshold, signif.threshold[ddeme])
+			### >>>
+			II <- findContigs(scanResult = scanResult, reftb = reftb, POS = X$obsData$POS, PAC = X$obsData$PAC, wSNP = X$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = sth, maxIter = maxIter, stat = stat, discard_extraRange = discard_extraRange, weighted_metaEstimate = weighted_metaEstimate)
+			R = rbind(R, II)
+		}
+		if (nrow(R)>=1) rownames(R) <- 1:nrow(R)
+		if (output_region_wise_estimates==FALSE) {
+			R$BFSynth = NULL
+			R$sweepAgeSynth = NULL
+		}
+		return(R)
+	} else if (class(X)=="validationTable") {
+		if (!any(sapply(scanResult[[1]], is.list))) stop("scanResult must be a result obtained from a validationTable object.")
+		ANALYSIS = scanResult
+		for (d in seq_along(scanResult)) {
+			deme <- names(scanResult)[d]
+			cat("\n\n==========================\n",deme,"\n==========================\n")
+			for (i in seq_along(scanResult[[deme]])) {
+				#cat("\n\n>>> ",deme," ",i,"\n")
+				I = scanResult[[deme]][[i]]
+				demes4contig = names(scanResult); demes4contig = demes4contig[demes4contig!="i0"]
+				R <- c()
+				for (dd in seq_along(demes4contig)) {
+					ddeme <- demes4contig[dd]
+					sth = ifelse(length(signif.threshold)==1, signif.threshold, signif.threshold[ddeme])
+					### >>>
+					 capture.output({ II = findContigs(scanResult = I, reftb = reftb, POS = X$SFS[[deme]][[i]]$obsData$POS, PAC = X$SFS[[deme]][[i]]$obsData$PAC, wSNP = X$SFS[[deme]][[i]]$obsData$nSNP, deme = ddeme, max_L = max_L, signif.threshold = sth, maxIter = maxIter, stat = stat, discard_extraRange = discard_extraRange, weighted_metaEstimate = weighted_metaEstimate) })
+					#true.age = if (deme=="i0") NA else X$PRIORS[[deme]]$sweepAge[i]
+					#if (!is.na(II[1,1])) R = rbind(R, data.frame(true.model = deme, run = i, est.model = II$deme, true.age = true.age, II))
+					R = rbind(R, II)
+				}
+				if (nrow(R)>=1) rownames(R) <- 1:nrow(R)
+				ANALYSIS[[deme]][[i]] = R
+			}
+		}
+		#R$deme = NULL
+		#R$OK = R$true.model==R$est.model
+		class(ANALYSIS) <- "validationResult"
+		if (output_region_wise_estimates==FALSE) {
+			ANALYSIS$BFSynth = NULL
+			ANALYSIS$sweepAgeSynth = NULL
+		}
+		return(ANALYSIS)
+	} else {
+		stop("Object x is not an observedDataset or validationTable object.")
+	}
+
 }
 
-#' @title Thinning
-#' @export
-thin_SIMPLEGOOD <- function(x, reftb, method = "contig", stat = "mean", bwadjust = 1, minWindows = 1, plot_thinning = F, epsilon = 1e-15, summary_stat = "mean") {
-  ## output==list(density=NULL, estimation=NULL) means ' all is "i0" ' (by Ho-conservatism)
-  
-  AVALL <- x$adjVals
-  x <- x$res
-  
-  RET <- list("density"=c(), "estimation"=c())
-  demes <- names(reftb$SFS)
-  demes <- demes[demes!="i0"]
-  for (d in seq_along(demes)) {
-    dn <- demes[d]
-  
-    #y <- subset(x, !is.na(deme.under.sel) & deme.under.sel == dn)
-    INDICES <- with(x, !is.na(deme.under.sel) & deme.under.sel == dn)
-    y <- x[INDICES,]
-    AV <- AVALL[INDICES]
-    
-    gr <- c(min(x$start.pos), max(x$end.pos))
-    ymid <- (y$start.pos+y$end.pos)/2
-    L <- reftb$GENERAL$windowSize
-    
-    if (is.null(nrow(y))||nrow(y)<minWindows) next()
-    
-    if (method=="density") {
-      
-      if (is.null(bwadjust)) {
-        D <- density( ymid,
-                      from = gr[1],
-                      to = gr[2])
-      } else {
-        D <- density( ymid,
-                      bw = reftb$GENERAL$windowSize * bwadjust,
-                      from = gr[1],
-                      to = gr[2])
-      }
-      
-      if (plot_thinning) {
-        plot(D, main="Gaussian spline of sweeped regions")
-        points(ymid, rep(0, length(ymid)), pch="|")
-      }
-      
-      D$y[D$y<epsilon] <- 0
-      
-      # derivate
-      dD <- list(x=D$x[-1], y=diff(D$y) / diff(D$x))
-      
-      # find near-zero intersection
-      dDy <- dD$y
-      zI <- sapply(2:(length(dDy)-1), function(j) dDy[j-1]>0&&dDy[j]>=0&&dDy[j+1]<0 ) # local maximum
-      zI <- c(FALSE, zI, FALSE)
-      
-      xleft <- dD$x[zI]
-      xright <- dD$x[c(FALSE, zI[-length(zI)])]
-      xP <- ( xleft + xright ) / 2
-      
-      if (length(xP)==0) {
-        adret <- list("density"=cbind("x"=NA, "y"=NA), "estimation"=rep(NA, 7))
-      } else {
-      
-        # discardOrphanWindow? => still missing in the code
-        idx <- sapply(xP, function(p) {
-          which.min( abs(ymid - p) )
-        })
-        
-        dy <- D$y
-        lims <- sapply(which(c(F,zI)), function(p) {
-          lm <- which(dy[1:p]<=epsilon)
-          lm <- lm[length(lm)]
-          
-          rm <- which(dy[p:length(dy)]<=epsilon) + (p-1)
-          rm <- rm[1]
-          
-          L <- which.min( abs(ymid - D$x[lm]) )
-          L <- ifelse(length(L)==0, min(y$start.pos), y$start.pos[L])
-          R <- which.min( abs(ymid - D$x[rm]) )
-          R <- ifelse(length(R)==0, max(y$end.pos), y$end.pos[R])
-          
-          return(c(L, R))
-        })
-        lims <- t(lims)
-        
-        ret <- data.frame(sweep.center=xP, 
-                          sweep.lbound = lims[,1],
-                          sweep.rbound = lims[,2],
-                          deme=dn,
-                          sweepAge=y$sweepAge[idx], 
-                          sweepAge.IC.low=y$sweepAge.IC.low[idx],
-                          sweepAge.IC.up=y$sweepAge.IC.up[idx])
-        #return(list("density"=cbind("x"=D$x, "y"=D$y), "estimation"=ret))
-  
-        adret <- list("density"=cbind("x"=D$x, "y"=D$y), "estimation"=ret)
-        
-      }
-      
-    } else if (method=="contig") {
-      
-      store <- TRUE
-      startp <- y[1,"start.pos"]
-      age <- age.low <- age.up <- bf <- XXX <- c()
-      ret <- c()
-      for (i in 1:nrow(y)) {
-        
-        if (i>1) store <- ifelse( y[i,"start.pos"] - y[i-1,"start.pos"] > bwadjust * L, FALSE, TRUE)
-        
-        if (!store) {
-          if (stat=="mean") {
-            pe.Age <- do.call(summary_stat, list(age))
-            pe.lAge <- do.call(summary_stat, list(age.low))
-            pe.rAge <- do.call(summary_stat, list(age.up))
-            pe.BF <- mean(bf)
-            pe.XXX <- do.call(summary_stat, list(XXX))
-          } else {
-            #ix <- which.min( abs(y$start.pos+y$end.pos)/2 - (startp+endp)/2 )
-            ix <- order(abs(y$start.pos+y$end.pos)/2 - (startp+endp)/2)
-            #ix <- ix[1:3]
-            ix <- ix[1] #first closer
-            pe.Age <- do.call(summary_stat, list(age[ix]))
-            pe.lAge <- do.call(summary_stat, list(age.low[ix]))
-            pe.rAge <- do.call(summary_stat, list(age.up[ix]))
-            pe.BF <- do.call(summary_stat, list(bf[ix]))
-            pe.XXX <- pe.Age
-          }
-          add <- data.frame(sweep.center = (startp+endp)/2, 
-                            sweep.lbound = startp,
-                            sweep.rbound = endp,
-                            BF = pe.BF,
-                            deme=dn, 
-                            sweepAge = pe.Age,
-                            sweepAgeSynth = pe.XXX,
-                            sweepAge.IC.low = pe.lAge,
-                            sweepAge.IC.up = pe.rAge)
-          ret <- rbind(ret, add)
-          startp <- y[i,"start.pos"]
-          age <- age.low <- age.up <- bf <- XXX <- c()
+findContigs = function(scanResult, reftb, POS, PAC, wSNP, deme, max_L, signif.threshold, maxIter = 1000, stat = getmode, discard_extraRange = TRUE, weighted_metaEstimate = TRUE) {
+	if (!is.character(deme)) stop("deme must be a string")
+
+	stat_BF <- max # max better represents the pr of the very core (ie at the very proximity of the advantageous mutation)
+
+    v = if (deme != "i0") data.frame(pos = scanResult$pos, 
+	n = scanResult$stability[,deme], 
+	a = scanResult$param[,deme],
+	w0 = scanResult$postpr[,"i0"],
+	w = scanResult$postpr[,deme]) else data.frame(pos = scanResult$pos, n = scanResult$stability[,deme])
+
+	# note that n could be scanResult$postpr[deme]
+	
+	RES <- data.frame(sweep.center = integer(0),
+					  sweep.lbound = integer(0),
+					  sweep.rbound = integer(0),
+					  BF = numeric(0),
+					  BFSynth = numeric(0),
+					  deme = character(0),
+					  sweepAge = numeric(0),
+					  sweepAgeSynth = numeric(0),
+					  sweepAge.IC.low = numeric(0),
+					  sweepAge.IC.up = numeric(0),
+					  nBaseSNPs = integer(0))
+
+    Kontigs <- c()
+	#postDistrib <- list()
+    while (1) { cat(".")
+        line <- which.max(v$n)
+
+        # left
+        iter <- 0; pp <- line
+        while (iter < maxIter) {
+            iter <- iter + 1
+            poz <- v[pp,"pos"]
+            inHorizon <- subset(v, pos>=(poz-max_L) & pos<poz & n>signif.threshold)
+            if (nrow(inHorizon)==0) break
+            pp <- as.integer(rownames(inHorizon)[which.min(inHorizon$pos)])
         }
-        
-        endp <- y[i,"end.pos"]
-        age <- c(age, y[i,"sweepAge"])
-        age.low <- c(age.low, y[i,"sweepAge.IC.low"])
-        age.up <- c(age.up, y[i,"sweepAge.IC.up"])
-        bf <- c(bf, y[i,"BayesFactor"])
-        XXX <- c(XXX, unlist(AV[[i]]))
-      }
-      
-      if (store) {
-        if (stat=="mean") {
-          pe.Age <- do.call(summary_stat, list(age))
-          pe.lAge <- do.call(summary_stat, list(age.low))
-          pe.rAge <- do.call(summary_stat, list(age.up))
-          pe.BF <- mean(bf)
-          pe.XXX <- do.call(summary_stat, list(XXX))
-        } else {
-          #ix <- which.min( abs(y$start.pos+y$end.pos)/2 - (startp+endp)/2 )
-          ix <- order(abs(y$start.pos+y$end.pos)/2 - (startp+endp)/2)
-          #ix <- ix[1:3]
-          ix <- ix[1] #first closer
-          pe.Age <- do.call(summary_stat, list(age[ix]))
-          pe.lAge <- do.call(summary_stat, list(age.low[ix]))
-          pe.rAge <- do.call(summary_stat, list(age.up[ix]))
-          pe.BF <- do.call(summary_stat, list(bf[ix]))
-          pe.XXX <- pe.Age
+        ppLeft <- pp
+
+        # right
+        iter <- 0; pp <- line
+        while (iter < maxIter) {
+            iter <- iter + 1
+            poz <- v[pp,"pos"]
+            inHorizon <- subset(v, pos<=(poz+max_L) & pos>poz & n>signif.threshold)
+            if (nrow(inHorizon)==0) break
+            pp <- as.integer(rownames(inHorizon)[which.max(inHorizon$pos)])
         }
-        add <- data.frame(sweep.center = (startp+endp)/2, 
-                          sweep.lbound = startp,
-                          sweep.rbound = endp,
-                          BF = pe.BF,
-                          deme=dn, 
-                          sweepAge = pe.Age,
-                          sweepAgeSynth = pe.XXX,
-                          sweepAge.IC.low = pe.lAge,
-                          sweepAge.IC.up = pe.rAge)
-        ret <- rbind(ret, add)
-      }
-      
-      rgg <- c(x$start.pos[1], x$end.pos[nrow(x)])
-      ymid <- (y$start.pos+y$end.pos)/2
-      if (plot_thinning) {
-        plot(ymid, rep(0, length(ymid)), pch="|", type="p", ylim=c(0,1), xlim=rgg)
-        segments(x0=ret$sweep.center, y0=0, y1=1, col="gray", lwd=1.5)
-        rect(xleft=ret$sweep.lbound, ybottom=.1, xright=ret$sweep.rbound, ytop=.2, col="lightgray")
-        abline(v=diff(rgg)*.5, col="red")
-      }
-      
-      #return(list("density"=cbind("x"=ret$sweep.center, "y"=ret$BF), "estimation"=ret))
-      adret <- list("density"=cbind("x"=ret$sweep.center, "y"=ret$BF), "estimation"=ret)
-      
-    } else {
-      stop("the method you provided does not exist")
+        ppRight <- pp
+
+        if (length(ppLeft)==0 || abs(ppLeft-ppRight) == 0) break
+
+        # append
+		do_NArm <- TRUE # important, sometimes weight-scaling can lead to NAs // added Feb 21st 2017
+		if (weighted_metaEstimate) {
+			subv <- v[c(ppLeft:ppRight),,drop=F]
+			if (discard_extraRange) {
+				Range = unlist(reftb$GENERAL$sweepAgeDistrib[[deme]][2:3])
+				subv[!is.na(subv[,"a"]) & (subv[,"a"]<Range[1] | subv[,"a"]>Range[2]),"a"] <- NA
+			}
+			subv <- na.omit(subv[, c("a","w"), drop=F])
+			subv$w <- subv$w / sum(subv$w)
+			nsnp <- nrow(subv)
+			if (nsnp==0) {
+				central_estimate = NA
+				IC_estimate = c(NA, NA)
+				#postDistrib = c(postDistrib, list(NA))
+			} else {
+				central_estimate <- stat(subv$a, na.rm = do_NArm, weights = subv$w)
+				IC_estimate <- c(coef(quantreg::rq(subv$a~1, tau = c(.025, .975), weights = subv$w)))
+				#postDistrib <- c(postDistrib, list(subv$a)) # should be adjusted, ideally
+			}
+		} else {
+			nsnp <- sum(!is.na(v[c(ppLeft:ppRight),"a"]))
+			central_estimate <- stat(v[c(ppLeft:ppRight),"a"], na.rm = do_NArm)
+			IC_estimate <- quantile(v[c(ppLeft:ppRight),"a"], c(.025, .975), na.rm = do_NArm)
+			#postDistrib <- c(postDistrib, list(v[c(ppLeft:ppRight),"a"]))
+		}
+		BF <- stat_BF( v[c(ppLeft:ppRight),"w"] / v[c(ppLeft:ppRight),"w0"], na.rm = TRUE )
+        ad <- c(v[c(ppLeft, ppRight),"pos"], central_estimate, IC_estimate, nsnp, BF)
+        Kontigs <- rbind(Kontigs, ad)
+        # hide
+        #v[c(ppLeft:ppRight),"n"] <- NA
+		v[c(ppLeft:ppRight),c("n","w","w0","a")] <- NA
     }
-   
-    RET$density <- rbind(RET$density, adret$density)
-    RET$estimation <- rbind(RET$estimation, adret$estimation)
-  }
-  
-  if (method=="contig" && !is.null(RET$estimation)) {
-    euRows <- with(RET$estimation, which(sweep.rbound-sweep.lbound+1 >= minWindows*L))
-    RET$estimation <- RET$estimation[euRows,]
-    RET$density <- RET$density[euRows,]
-  }
 
-  return(RET)
+    if (is.null(Kontigs) || length(Kontigs)==0) { 
+	#RES$sweepAge.postDistrib <- list(); 
+	return( RES ) }
+
+    Kontigs <- as.data.frame(Kontigs)
+    names(Kontigs) <- c("pos_left", "pos_right", "SNP_estim", "IC_low", "IC_up", "nBaseSNPs", "BF")
+    Kontigs$pos_middle = with(Kontigs, 1/2*(pos_left+pos_right))
+    Kontigs$length = with(Kontigs, pos_right-pos_left)
+    Kontigs = Kontigs[order(Kontigs$pos_left),]
+
+	if (FALSE) print(Kontigs)
+	
+	# contig-wise age inference
+	Kontigs$meta_estim = NA; Kontigs$BFSynth = NA
+	cat("\n")
+	if (deme != "i0") {
+		for (i in 1:nrow(Kontigs)) {
+			ad = scan_core(reftb, POS, PAC, wSNP, firstPos = Kontigs[i,"pos_left"], lastPos = Kontigs[i,"pos_right"], minSNP = 0, windowSizes = NULL, nSteps = 1, infer.age = TRUE, discard_extraRange = discard_extraRange)
+			# meta_estim
+			vl <- unique((ad$param)[,deme])
+			if (length(vl)!=1) stop("error in meta-estimation: non-unique value (probably due to the presence of a NA)")
+			Kontigs[i,"meta_estim"] = vl
+			# BF
+			vl <- unique((ad$postpr)[,deme])
+			vl_i0 <- unique((ad$postpr)[,"i0"])
+			if (length(vl)!=1) stop("error in meta-postpr estimate: non-unique vl (probably due to the presence of a NA)")
+			if (length(vl_i0)!=1) stop("error in meta-postpr estimate: non-unique vl_i0 (probably due to the presence of a NA)")
+			Kontigs[i,"BFSynth"] = vl / vl_i0 # proxy of Bayes Factor, as postpr(sweep_model)/postpr(neutral_model)
+		}
+	}
+	
+	RES <- rbind(RES, data.frame(
+						sweep.center = Kontigs$pos_middle,
+						sweep.lbound = Kontigs$pos_left,
+						sweep.rbound = Kontigs$pos_right,
+						BF = Kontigs$BF,
+						BFSynth = Kontigs$BFSynth,
+						deme = deme,
+						sweepAge = Kontigs$SNP_est,
+						sweepAgeSynth = Kontigs$meta_estim,
+						sweepAge.IC.low = Kontigs$IC_low,
+						sweepAge.IC.up = Kontigs$IC_up,
+						nBaseSNPs = Kontigs$nBaseSNPs))
+	#RES$sweepAge.postDistrib <- postDistrib
+	rownames(RES) <- 1:nrow(RES)
+
+    return(RES)
 }
-
+  

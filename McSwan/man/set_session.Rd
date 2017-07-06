@@ -2,17 +2,21 @@
 % Please edit documentation in R/miscellenaous.R
 \name{set_session}
 \alias{set_session}
-\title{Set mandatory paths to external softwares}
+\title{Initialize the working session}
 \usage{
-set_session(tempDir, pythonPath = "python", javaPath)
+set_session(tempDir, pythonPath = "python", javaPath = "java")
 }
 \arguments{
-\item{tempDir}{path to a temporary directory}
+\item{tempDir}{path/name of a temporary directory (will be recursively created if it does not exist; if the directory already exists, its content will be overridden)}
 
-\item{javaPath}{path to your \code{java} executable, or the OS environment variable}
+\item{pythonPath}{path to the \code{python} executable, simply give "python" if python is callable as an environment variable}
 
-\item{pyPath}{path to your \code{python} executable, or the OS environment variable}
-
-\item{msmsPath}{path to the \code{msms} executable, or the OS environment variable}
+\item{javaPath}{path to the \code{java} executable, simply give "java" if python is callable as an environment variable}
+}
+\details{
+If python is not set as an environment variable, please see <https://docs.python.org/2/using/windows.html>, alternatively you can specify the python executable ("java.exe" for instance on Windows). Java is to be specified only if you simulate pseudo-observed datasets for the validation procedure, otherwise you can leave its default value.
+}
+\examples{
+Please refer to the vignette.
 }
 
