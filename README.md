@@ -12,4 +12,8 @@ library(devtools)
 
 install_github("sunyatin/McSwan/McSwan")
 
+## Tutorial
+
+For a tutorial, please read "McSwan_tutorial_24052017.html" in this directory.
+
 ## References
