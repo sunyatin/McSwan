@@ -14,6 +14,6 @@ install_github("sunyatin/McSwan/McSwan")
 
 ## Tutorial
 
-For a tutorial, please read "McSwan_tutorial_24052017.html".
+For a tutorial, please read the vignette in the vignettes/ directory.
 
 ## References
