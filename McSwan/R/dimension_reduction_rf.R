@@ -21,6 +21,7 @@
 #' @seealso \code{\link{coalesce}}, \code{\link{plsr}}, \code{\link{lda}}
 #' @examples Please refer to the vignette.
 #' @import Matrix
+#' @import randomForest
 #' @export
 dim_reduction_rf <- function(x,
 						# REFTB PRE-PROCESSING

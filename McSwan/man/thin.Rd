@@ -28,7 +28,7 @@ Returns a dataframe of the estimated sweep contigs. One sweep region per line, a
 \item \code{\bold{sweep.center}} the center of the sweep region contig
 \item \code{\bold{sweep.lbound}} the first position of the sweep region contig
 \item \code{\bold{sweep.rbound}} the last position of the sweep region contig
-\item \code{\bold{BF}} aggregated Bayes Factor of the sweep region contig
+\item \code{\bold{RPP}} ratio of LDA-derived posterior probabilities: highest ratio of pp(is)/pp(i0) among all the SNPs within the sweep region, where pp(is) is the integrated posterior probability of the selective model is at a focal SNP and pp(i0) the integrated posterior probability of the neutral model at the same SNP
 \item \code{\bold{deme}} the population detected to have experienced a selective sweep (given as "\emph{i}" and the index of the population in the \emph{MS} command)
 \item \code{\bold{sweepAge}} the point estimate for the sweep age
 \item \code{\bold{sweepAge.IC.low}} lower boundary of the 95\% confidence interval for the sweep age estimation
@@ -43,6 +43,6 @@ This function merges contiguous regions detected as having experienced a selecti
 Please refer to the vignette.
 }
 \seealso{
-\code{\link{gscan}}
+\code{\link{gscan}}, \code{\link{summary}}, \code{\link{summary.validationResult()}}
 }
 

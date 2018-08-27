@@ -13,14 +13,14 @@
 #' \item \code{\bold{sweep.center}} the center of the sweep region contig
 #' \item \code{\bold{sweep.lbound}} the first position of the sweep region contig
 #' \item \code{\bold{sweep.rbound}} the last position of the sweep region contig
-#' \item \code{\bold{BF}} aggregated Bayes Factor of the sweep region contig
+#' \item \code{\bold{RPP}} ratio of LDA-derived posterior probabilities: highest ratio of pp(is)/pp(i0) among all the SNPs within the sweep region, where pp(is) is the integrated posterior probability of the selective model is at a focal SNP and pp(i0) the integrated posterior probability of the neutral model at the same SNP
 #' \item \code{\bold{deme}} the population detected to have experienced a selective sweep (given as "\emph{i}" and the index of the population in the \emph{MS} command)
 #' \item \code{\bold{sweepAge}} the point estimate for the sweep age
 #' \item \code{\bold{sweepAge.IC.low}} lower boundary of the 95\% confidence interval for the sweep age estimation
 #' \item \code{\bold{sweepAge.IC.up}} upper boundary of the 95\% confidence interval for the sweep age estimation
 #' \item \code{\bold{sweepAge.postDistrib}} posterior distribution of the sweep age estimation
 #' }
-#' @seealso \code{\link{gscan}}
+#' @seealso \code{\link{gscan}}, \code{\link{summary}}, \code{\link{summary.validationResult()}}
 #' @export
 #' @examples Please refer to the vignette.
 thin <- function(scanResult, reftb, X, max_L = 1e6, signif.threshold = .5, maxIter = 1000, stat = getmode) {
@@ -51,6 +51,7 @@ thin <- function(scanResult, reftb, X, max_L = 1e6, signif.threshold = .5, maxIt
 		if (output_region_wise_estimates==FALSE) {
 			R$BFSynth = NULL
 			R$sweepAgeSynth = NULL
+			names(R)[which(names(R)=="BF")] <- "RPP"
 		}
 		return(R)
 	} else if (class(X)=="validationTable") {
@@ -83,6 +84,7 @@ thin <- function(scanResult, reftb, X, max_L = 1e6, signif.threshold = .5, maxIt
 		if (output_region_wise_estimates==FALSE) {
 			ANALYSIS$BFSynth = NULL
 			ANALYSIS$sweepAgeSynth = NULL
+			names(R)[which(names(R)=="BF")] <- "RPP"
 		}
 		return(ANALYSIS)
 	} else {

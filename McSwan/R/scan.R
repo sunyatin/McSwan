@@ -9,7 +9,7 @@
 #' @param nSteps (integer) number of overlapping shifts (the higher the number, the more overlapping windows will be introduced, increasing the scan resolution)
 #' @param discard_extraRange (logical) if TRUE, will discard sweep age estimations going beyond the prior range (TRUE is recommended)
 #' @param minSNP (integer) minimum number of SNPs in the window to consider it valid for inference
-#' @return A list to be further processed with the \code{thin()} function.
+#' @return A list to be further processed with the \code{thin()} function, containing 5 slots: \itemize{\item \emph{pos} vector giving the position of all analyzed SNPs,\item \emph{stability} matrix of size n_SNPs x n_models giving the score of the SNP for each model (neutral and selective), \item \emph{postpr} a matrix of size n_SNPs x n_models giving the posterior probability (weighted score) of the SNP for each model, \item \emph{param} matrix giving the estimated age of the sweep for each SNP and for each selective model (note that this age is only a very rough estimate and should not be used directly), \item \emph{inferentiality} quality of the estimation at the SNP position (ranges from 0 to 1), it is the proportion of overlapping windows having at least "minSNP".}
 #' @seealso \code{\link{get_SFS}}, \code{\link{generate_pseudoobs}}, \code{\link{thin}}
 #' @export
 gscan = function(X, reftb, firstPos = NULL, lastPos = NULL, minSNP = 10, windowSizes = seq(1e4, 2e5, length.out = 20), nSteps = 20, discard_extraRange = TRUE) {

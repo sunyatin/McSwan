@@ -7,6 +7,7 @@ Author: Remi Tournebize
 Maintainer: Remi Tournebize <remi.tournebize@ird.fr>
 Description: The Multiple-collision Coalescent SWeep ANalyser (McSwan) is a genome scan approach which aims at simultaneously detecting and dating hard selective sweeps from genome sequence data of multiple individuals from (possibly) multiple populations.
 License: GPL (>= 2)
+Suggests: knitr
 Imports:
 	Rcpp (>= 0.12.5),
 	phyclust (>= 0.1-16),
@@ -23,4 +24,6 @@ Imports:
 	RColorBrewer (>= 1.1)
 LinkingTo: Rcpp
 LazyData: TRUE
+VignetteBuilder: knitr
+URL: https://github.com/sunyatin/McSwan/tree/master/McSwan/vignettes/McSwan_tutorial.html
 RoxygenNote: 5.0.1

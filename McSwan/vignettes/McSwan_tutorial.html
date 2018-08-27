@@ -146,7 +146,7 @@ $(document).ready(function () {
 
 <h1 class="title toc-ignore">McSwan</h1>
 <h4 class="author"><em>Rémi Tournebize</em></h4>
-<h4 class="date"><em>May, 24<sup>th</sup> 2017</em></h4>
+<h4 class="date"><em>Aug, 27<sup>th</sup> 2018</em></h4>
 
 </div>
 
@@ -173,6 +173,7 @@ $(document).ready(function () {
 </ul></li>
 <li><a href="#global-functions">Global functions</a></li>
 <li><a href="#troubleshoot">Troubleshoot</a></li>
+<li><a href="#what-is-the-optimal-signif.threshold-score-cutoff-to-use-for-the-thin-function">What is the optimal signif.threshold (score cutoff) to use for the thin() function?</a></li>
 </ul>
 </div>
 
@@ -192,7 +193,7 @@ $(document).ready(function () {
 <h1>Install McSwan package</h1>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r"><span class="co"># install.packages(&quot;devtools&quot;)</span>
 <span class="kw">require</span>(devtools)
-<span class="kw">install_github</span>(<span class="dt">repo =</span> <span class="st">&quot;sunyatin/McSwan/McSwan&quot;</span>)</code></pre></div>
+<span class="kw">install_github</span>(<span class="dt">repo =</span> <span class="st">&quot;sunyatin/McSwan/McSwan&quot;</span>, <span class="dt">ref =</span> <span class="st">&quot;b96f64d&quot;</span>)</code></pre></div>
 <hr />
 </div>
 <div id="initializing-the-working-session" class="section level1">
@@ -303,10 +304,10 @@ ms &lt;-<span class="st"> </span><span class="kw">paste</span>(<span class="st">
 <p>To calculate the performance statistics and output graphics to <code>file</code>:</p>
 <div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res &lt;-<span class="st"> </span><span class="kw">summary</span>(<span class="dt">X =</span> vjt, <span class="dt">valtb =</span> POD, <span class="dt">file =</span> <span class="kw">paste0</span>(tempDir,<span class="st">&quot;/McSwan_perf_statistics.pdf&quot;</span>))</code></pre></div>
 <p>The function <code>summary()</code> outputs a list of statistics. You can have access to each of them by typing:</p>
-<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">svj$performance.rates <span class="co"># the estimated performance rates (specificity = TNR, sensitivity = TPR, false discovery rates = FDR)</span>
-svj$NRMSE <span class="co"># normalized/standardized root mean square error</span>
-svj$number.of.sweeps <span class="co"># number of sweep contigs detected in each POD (ideally, should be 0 for the neutral model and 1 for the selective models)</span>
-svj$sweep.inclusiveness <span class="co"># number of times the detected sweeps encompass the beneficial mutation</span></code></pre></div>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">res$performance.rates <span class="co"># the estimated performance rates (specificity = TNR, sensitivity = TPR, false discovery rates = FDR)</span>
+res$NRMSE <span class="co"># normalized/standardized root mean square error</span>
+res$number.of.sweeps <span class="co"># number of sweep contigs detected in each POD (ideally, should be 0 for the neutral model and 1 for the selective models)</span>
+res$sweep.inclusiveness <span class="co"># number of times the detected sweeps encompass the beneficial mutation</span></code></pre></div>
 <hr />
 </div>
 </div>
@@ -362,7 +363,7 @@ svj$sweep.inclusiveness <span class="co"># number of times the detected sweeps e
 <li><code>sweep.center</code> the center of the sweep region</li>
 <li><code>sweep.lbound</code> the first position of the sweep region</li>
 <li><code>sweep.rbound</code> the last position of the sweep region</li>
-<li><code>BF</code> aggregated Bayes Factor</li>
+<li><code>RPP</code> ratio of the LDA-derived posterior probabilities between the selective vs. neutral models, ie the highest ratio among the SNPs within the sweep region, should be &gt;1</li>
 <li><code>deme</code> the population detected to have experienced a selective sweep (given as <code>i</code> &amp; index of the population, here <code>i1</code> = Europeans and <code>i2</code> = Luhyans)</li>
 <li><code>sweepAge</code> the point sweep age estimate</li>
 <li><code>sweepAge.IC.low</code> lower boundary of the 95% confidence interval for the sweep age estimation</li>
@@ -385,6 +386,22 @@ svj$sweep.inclusiveness <span class="co"># number of times the detected sweeps e
 <div id="troubleshoot" class="section level1">
 <h1>Troubleshoot</h1>
 <p>If you encounter any bug or problem, please contact remi (dot) tournebize (at) ird (dot) fr</p>
+<hr />
+</div>
+<div id="what-is-the-optimal-signif.threshold-score-cutoff-to-use-for-the-thin-function" class="section level1">
+<h1>What is the optimal signif.threshold (score cutoff) to use for the thin() function?</h1>
+<p>To estimate the optimal <em>signif.threshold</em> for the CEU population (model <em>i1</em>) that maximizes TPR while minimizing TNR, you may use the following script:</p>
+<div class="sourceCode"><pre class="sourceCode r"><code class="sourceCode r">    test &lt;-<span class="st"> </span><span class="kw">seq</span>(.<span class="dv">01</span>, <span class="dv">1</span>, <span class="dt">by =</span> .<span class="dv">02</span>)
+    RES &lt;-<span class="st"> </span><span class="kw">c</span>()
+    for (i in <span class="kw">seq_along</span>(test)) {
+        ob &lt;-<span class="st"> </span><span class="kw">thin</span>(OA, reftb, <span class="dt">X =</span> obs, <span class="dt">max_L =</span> <span class="fl">1e6</span>, <span class="dt">signif.threshold =</span> <span class="kw">c</span>(test[i], <span class="fl">0.5</span>))
+        res &lt;-<span class="st"> </span><span class="kw">summary</span>(<span class="dt">X =</span> ob, <span class="dt">valtb =</span> POD, <span class="dt">file =</span> <span class="kw">paste0</span>(tempDir,<span class="st">&quot;/McSwan_perf_statistics.pdf&quot;</span>))
+        RES &lt;-<span class="st"> </span><span class="kw">rbind</span>(RES, <span class="kw">data.frame</span>(<span class="dt">signif.thresh =</span> test[i], res$performance.rates$binary[<span class="dv">1</span>, <span class="kw">c</span>(<span class="st">&quot;TPR.sensitivitiy&quot;</span>, <span class="st">&quot;TNR.specificity&quot;</span>)]))
+    }
+    
+    <span class="kw">ggplot</span>(RES) +<span class="st"> </span>
+<span class="st">        </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x=</span>signif.thresh, <span class="dt">y=</span>TPR.sensitivity), <span class="dt">col=</span><span class="st">&quot;red&quot;</span>) +
+<span class="st">        </span><span class="kw">geom_line</span>(<span class="kw">aes</span>(<span class="dt">x=</span>signif.thresh, <span class="dt">y=</span>TNR.specificity), <span class="dt">col=</span><span class="st">&quot;blue&quot;</span>)</code></pre></div>
 </div>
 
 

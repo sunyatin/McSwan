@@ -235,13 +235,28 @@ summary.validationResult <- function(X, valtb, file) {
   maxCV <- unlist(cv)
   emptyCV <- ifelse(length(maxCV)==0, TRUE, FALSE)
   maxCV <- ifelse(emptyCV, 0, max(maxCV))
-  cvv <- matrix(rep(NA, length(demes_no_i0)*length(0:maxCV)), nrow=length(demes_no_i0))
-  colnames(cvv) <- 0:maxCV
-  rownames(cvv) <- demes_no_i0
-  for (i in seq_along(cv)) {
-    tmp <- table(cv[[i]])
-    cvv[i,names(tmp)] <- tmp/sum(tmp)*100
-  }
+  
+    #### modif 27.08.2018 rt
+    id <- apply(D[,c("true.model","simID")], 1, function(x) paste0(x[1], x[2]))
+    maxS <- max(table(id))
+    nSim <- valtb$GENERAL$nSimul
+    cvv <- matrix(rep(NA, length(demes_no_i0)*(maxS+1)), nrow = length(demes_no_i0))
+    colnames(cvv) <- 0:maxS
+    rownames(cvv) <- demes_no_i0
+    for (i in seq_along(demes_no_i0)) {
+        d0 <- subset(D, true.model==demes_no_i0[i] & est.model=="i0")
+        dn0 <- subset(D, true.model==demes_no_i0[i] & est.model!="i0")
+        d <- table(dn0$simID)
+        x <- c(nrow(d0), sapply(1:maxS, function(x) sum(d==x)))
+        cvv[i,] <- x/sum(x)*100
+    }
+  #cvv <- matrix(rep(NA, length(demes_no_i0)*length(0:maxCV)), nrow=length(demes_no_i0))
+  #colnames(cvv) <- 0:maxCV
+  #rownames(cvv) <- demes_no_i0
+  #for (i in seq_along(cv)) {
+  #  tmp <- table(cv[[i]])
+  #  cvv[i,names(tmp)] <- tmp/sum(tmp)*100
+  #}
   suppressWarnings(barplot(cvv, 
                            col = RColorBrewer::brewer.pal(nrow(cvv), "Paired"), 
                            xlab = "Number of discrete sweeps detected",
